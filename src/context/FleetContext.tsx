@@ -135,15 +135,32 @@ export function FleetProvider({ children, navigateToChat }: { children: ReactNod
         };
 
         const totalStops = route.stops.length;
-        const stopsCompleted = Math.floor(newProgress * totalStops);
-        const stopsRemaining = totalStops - stopsCompleted;
-
         const completedStopsSet = new Set(vehicle.completedStops || []);
-        for (let i = 0; i < stopsCompleted; i++) {
-          if (route.stops[i]) {
-            completedStopsSet.add(route.stops[i].id);
+
+        // Proximity-based completion: mark a stop completed when within ~200m
+        const toRadians = (deg: number) => (deg * Math.PI) / 180;
+        const distanceKm = (a: Coordinates, b: Coordinates) => {
+          const R = 6371; // km
+          const dLat = toRadians(b.lat - a.lat);
+          const dLng = toRadians(b.lng - a.lng);
+          const lat1 = toRadians(a.lat);
+          const lat2 = toRadians(b.lat);
+          const sinDLat = Math.sin(dLat / 2);
+          const sinDLng = Math.sin(dLng / 2);
+          const h = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLng * sinDLng;
+          return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+        };
+
+        const nextUncompletedIndex = route.stops.findIndex(s => !completedStopsSet.has(s.id));
+        if (nextUncompletedIndex >= 0) {
+          const nextStop = route.stops[nextUncompletedIndex];
+          const distToNextKm = distanceKm(interpolatedPosition, nextStop.coordinates);
+          if (distToNextKm <= 0.2) { // ~200 meters threshold
+            completedStopsSet.add(nextStop.id);
           }
         }
+
+        const stopsRemaining = totalStops - completedStopsSet.size;
 
         const estimatedTotalMinutes = 30;
         const eta = Math.max(1, Math.round(estimatedTotalMinutes * (1 - newProgress)));
