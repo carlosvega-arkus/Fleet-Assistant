@@ -174,6 +174,7 @@ export function FleetMap() {
         {allVisibleRoutes.map(route => {
           if (!route || !route.routeGeometry || route.routeGeometry.length === 0) return null;
           const isFocused = focusedRouteId === route.id;
+          const hasActiveVehicleOnRoute = vehicles.some(v => v.status === 'in_route' && v.currentRouteId === route.id);
 
           const geojson: any = {
             type: 'Feature',
@@ -201,7 +202,7 @@ export function FleetMap() {
                 />
               </Source>
 
-              {isFocused && route.stops.map(stop => {
+              {isFocused && hasActiveVehicleOnRoute && route.stops.map(stop => {
                 const vehicleOnRoute = vehicles.find(v => v.currentRouteId === route.id && v.status === 'in_route');
                 const isCompleted = vehicleOnRoute?.completedStops?.has(stop.id) || false;
 

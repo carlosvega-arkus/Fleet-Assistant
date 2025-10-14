@@ -166,13 +166,21 @@ export function FleetProvider({ children, navigateToChat }: { children: ReactNod
         const eta = Math.max(1, Math.round(estimatedTotalMinutes * (1 - newProgress)));
 
         if (newProgress >= 1) {
+          const completedRouteId = vehicle.currentRouteId;
           setVehicles(prev => prev.map(v =>
             v.id === vehicle.id
               ? { ...v, status: 'idle', currentRouteId: undefined, routeProgress: 0, stopsRemaining: 0, eta: undefined, currentPosition: undefined, completedStops: undefined }
               : v
           ));
-          if (focusedRouteId === vehicle.currentRouteId) {
+          if (focusedRouteId === completedRouteId) {
             setFocusedRouteId(null);
+          }
+          if (completedRouteId) {
+            setVisibleRouteIds(prev => {
+              const next = new Set(prev);
+              next.delete(completedRouteId);
+              return next;
+            });
           }
         } else {
           updateVehiclePosition(vehicle.id, interpolatedPosition, newProgress, stopsRemaining, eta, completedStopsSet);
