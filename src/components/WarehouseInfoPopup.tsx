@@ -1,4 +1,5 @@
 import { X, Truck, ArrowRight, ArrowLeft, Package, MapPin, TrendingUp, TrendingDown } from 'lucide-react';
+import { useState } from 'react';
 import { Warehouse, Vehicle, SavedRoute } from '../types';
 
 interface WarehouseInfoPopupProps {
@@ -9,6 +10,10 @@ interface WarehouseInfoPopupProps {
 }
 
 export function WarehouseInfoPopup({ warehouse, vehicles, routes, onClose }: WarehouseInfoPopupProps) {
+  const [incomingExpanded, setIncomingExpanded] = useState(false);
+  const [outgoingExpanded, setOutgoingExpanded] = useState(false);
+  const [availableExpanded, setAvailableExpanded] = useState(false);
+  const defaultLimit = 3;
   const vehiclesToWarehouse = vehicles.filter(v => {
     if (v.status !== 'in_route' || !v.currentRouteId) return false;
     const route = routes.find(r => r.id === v.currentRouteId);
@@ -54,7 +59,7 @@ export function WarehouseInfoPopup({ warehouse, vehicles, routes, onClose }: War
         <div className="bg-gray-800/50 rounded-lg p-3 space-y-2">
           <div className="flex items-start gap-2">
             <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-gray-300 leading-relaxed">{warehouse.address}</p>
+            <p className="text-xs text-gray-300 leading-relaxed truncate max-w-[280px]" title={warehouse.address}>{warehouse.address}</p>
           </div>
           <div className="flex items-center justify-between pt-2 border-t border-gray-700">
             <div className="flex items-center gap-3">
@@ -87,90 +92,113 @@ export function WarehouseInfoPopup({ warehouse, vehicles, routes, onClose }: War
 
         {vehiclesToWarehouse.length > 0 && (
           <div className="space-y-2">
-            <div className="flex items-center gap-2 px-2 py-1.5 bg-green-500/10 rounded-lg border border-green-500/20">
+            <button
+              className="w-full flex items-center gap-2 px-2 py-1.5 bg-green-500/10 rounded-lg border border-green-500/20 hover:bg-green-500/15 transition-colors"
+              onClick={() => setIncomingExpanded(!incomingExpanded)}
+            >
               <ArrowRight className="w-4 h-4 text-green-400" />
               <span className="text-sm font-semibold text-green-400">Incoming</span>
               <span className="ml-auto text-xs font-bold text-green-400 bg-green-500/20 px-2 py-0.5 rounded-full">
                 {vehiclesToWarehouse.length}
               </span>
-            </div>
+            </button>
             <div className="space-y-2">
-              {vehiclesToWarehouse.map(vehicle => {
+              {(incomingExpanded ? vehiclesToWarehouse : vehiclesToWarehouse.slice(0, defaultLimit)).map(vehicle => {
                 const route = routes.find(r => r.id === vehicle.currentRouteId);
                 return (
                   <div
                     key={vehicle.id}
-                    className="bg-gray-800/50 border border-gray-700 rounded-lg p-3 hover:border-green-500/50 transition-colors"
+                    className="bg-gray-800/50 border border-gray-700 rounded-lg p-2.5 hover:border-green-500/50 transition-colors"
                   >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-green-500/20 rounded flex items-center justify-center">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-6 h-6 bg-green-500/20 rounded flex items-center justify-center flex-shrink-0">
                           <Truck className="w-3 h-3 text-green-400" />
                         </div>
-                        <span className="text-white font-semibold text-sm">{vehicle.alias}</span>
+                        <span className="text-white font-semibold text-sm truncate">{vehicle.alias}</span>
+                        {route && (
+                          <span className="text-gray-400 text-xs truncate">· {route.name}</span>
+                        )}
                       </div>
                       {vehicle.eta && (
-                        <div className="bg-green-500/20 px-2 py-1 rounded">
-                          <span className="text-green-400 font-bold text-xs">
-                            {vehicle.eta} min
-                          </span>
-                        </div>
+                        <span className="bg-green-500/20 px-2 py-0.5 rounded text-green-400 font-bold text-xs flex-shrink-0">
+                          {vehicle.eta} min
+                        </span>
                       )}
                     </div>
-                    {route && (
-                      <p className="text-gray-400 text-xs pl-8">{route.name}</p>
-                    )}
                   </div>
                 );
               })}
+              {vehiclesToWarehouse.length > defaultLimit && (
+                <button
+                  className="w-full text-xs text-green-400 hover:text-green-300 transition-colors"
+                  onClick={() => setIncomingExpanded(!incomingExpanded)}
+                >
+                  {incomingExpanded ? 'Show less' : `Show all ${vehiclesToWarehouse.length}`}
+                </button>
+              )}
             </div>
           </div>
         )}
 
         {vehiclesFromWarehouse.length > 0 && (
           <div className="space-y-2">
-            <div className="flex items-center gap-2 px-2 py-1.5 bg-orange-500/10 rounded-lg border border-orange-500/20">
+            <button
+              className="w-full flex items-center gap-2 px-2 py-1.5 bg-orange-500/10 rounded-lg border border-orange-500/20 hover:bg-orange-500/15 transition-colors"
+              onClick={() => setOutgoingExpanded(!outgoingExpanded)}
+            >
               <ArrowLeft className="w-4 h-4 text-orange-400" />
               <span className="text-sm font-semibold text-orange-400">Outgoing</span>
               <span className="ml-auto text-xs font-bold text-orange-400 bg-orange-500/20 px-2 py-0.5 rounded-full">
                 {vehiclesFromWarehouse.length}
               </span>
-            </div>
+            </button>
             <div className="space-y-2">
-              {vehiclesFromWarehouse.map(vehicle => {
+              {(outgoingExpanded ? vehiclesFromWarehouse : vehiclesFromWarehouse.slice(0, defaultLimit)).map(vehicle => {
                 const route = routes.find(r => r.id === vehicle.currentRouteId);
                 return (
                   <div
                     key={vehicle.id}
-                    className="bg-gray-800/50 border border-gray-700 rounded-lg p-3 hover:border-orange-500/50 transition-colors"
+                    className="bg-gray-800/50 border border-gray-700 rounded-lg p-2.5 hover:border-orange-500/50 transition-colors"
                   >
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <div className="w-6 h-6 bg-orange-500/20 rounded flex items-center justify-center">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-6 h-6 bg-orange-500/20 rounded flex items-center justify-center flex-shrink-0">
                         <Truck className="w-3 h-3 text-orange-400" />
                       </div>
-                      <span className="text-white font-semibold text-sm">{vehicle.alias}</span>
+                      <span className="text-white font-semibold text-sm truncate">{vehicle.alias}</span>
+                      {route && (
+                        <span className="text-gray-400 text-xs truncate">· {route.name}</span>
+                      )}
                     </div>
-                    {route && (
-                      <p className="text-gray-400 text-xs pl-8">{route.name}</p>
-                    )}
                   </div>
                 );
               })}
+              {vehiclesFromWarehouse.length > defaultLimit && (
+                <button
+                  className="w-full text-xs text-orange-400 hover:text-orange-300 transition-colors"
+                  onClick={() => setOutgoingExpanded(!outgoingExpanded)}
+                >
+                  {outgoingExpanded ? 'Show less' : `Show all ${vehiclesFromWarehouse.length}`}
+                </button>
+              )}
             </div>
           </div>
         )}
 
         {idleVehiclesNearby.length > 0 && (
           <div className="space-y-2">
-            <div className="flex items-center gap-2 px-2 py-1.5 bg-blue-500/10 rounded-lg border border-blue-500/20">
+            <button
+              className="w-full flex items-center gap-2 px-2 py-1.5 bg-blue-500/10 rounded-lg border border-blue-500/20 hover:bg-blue-500/15 transition-colors"
+              onClick={() => setAvailableExpanded(!availableExpanded)}
+            >
               <Truck className="w-4 h-4 text-blue-400" />
               <span className="text-sm font-semibold text-blue-400">Available</span>
               <span className="ml-auto text-xs font-bold text-blue-400 bg-blue-500/20 px-2 py-0.5 rounded-full">
                 {idleVehiclesNearby.length}
               </span>
-            </div>
+            </button>
             <div className="grid grid-cols-2 gap-2">
-              {idleVehiclesNearby.slice(0, 4).map(vehicle => (
+              {(availableExpanded ? idleVehiclesNearby : idleVehiclesNearby.slice(0, 4)).map(vehicle => (
                 <div
                   key={vehicle.id}
                   className="bg-gray-800/50 border border-gray-700 rounded-lg p-2 hover:border-blue-500/50 transition-colors"
@@ -179,16 +207,19 @@ export function WarehouseInfoPopup({ warehouse, vehicles, routes, onClose }: War
                     <div className="w-5 h-5 bg-blue-500/20 rounded flex items-center justify-center">
                       <Truck className="w-3 h-3 text-blue-400" />
                     </div>
-                    <span className="text-white font-semibold text-xs">{vehicle.alias}</span>
+                    <span className="text-white font-semibold text-xs truncate">{vehicle.alias}</span>
                   </div>
                   <span className="text-gray-500 capitalize text-[10px] pl-6">{vehicle.status}</span>
                 </div>
               ))}
             </div>
             {idleVehiclesNearby.length > 4 && (
-              <p className="text-xs text-gray-500 text-center pt-1">
-                +{idleVehiclesNearby.length - 4} more available
-              </p>
+              <button
+                className="w-full text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                onClick={() => setAvailableExpanded(!availableExpanded)}
+              >
+                {availableExpanded ? 'Show less' : `Show all ${idleVehiclesNearby.length}`}
+              </button>
             )}
           </div>
         )}

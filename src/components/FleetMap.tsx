@@ -9,7 +9,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 export function FleetMap() {
-  const { warehouses, vehicles, savedRoutes, visibleRouteIds, focusedRouteId, focusedWarehouseId, focusedVehicleId, setFocusedVehicle } = useFleet();
+  const { warehouses, vehicles, savedRoutes, visibleRouteIds, focusedRouteId, focusedWarehouseId, focusedVehicleId, setFocusedVehicle, setFocusedWarehouse } = useFleet();
   const mapRef = useRef<any>(null);
   const [popupInfo, setPopupInfo] = useState<any>(null);
   const [show3D, setShow3D] = useState(false);
@@ -152,13 +152,18 @@ export function FleetMap() {
             >
               <div
                 className="relative group cursor-pointer"
-                onClick={() => setPopupInfo({ type: 'warehouse', data: warehouse })}
+                onClick={() => {
+                  setPopupInfo({ type: 'warehouse', data: warehouse });
+                  setFocusedWarehouse(warehouse.id);
+                }}
               >
-                <div className="absolute inset-0 w-14 h-14 bg-blue-500 rounded-full opacity-20 animate-pulse -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"></div>
+                {isFocused && (
+                  <div className="absolute inset-0 w-14 h-14 bg-blue-500 rounded-full opacity-20 animate-pulse -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"></div>
+                )}
                 <div className={`relative w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white shadow-2xl border-2 ${isFocused ? 'border-blue-400 scale-125' : 'border-white'} transition-all`}>
                   <Warehouse className="w-5 h-5" />
                 </div>
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 whitespace-nowrap bg-gray-900 text-white text-xs px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 whitespace-nowrap bg-gray-900/90 text-white text-xs px-2 py-1 rounded shadow-lg border border-gray-700">
                   {warehouse.name}
                 </div>
               </div>
@@ -169,6 +174,7 @@ export function FleetMap() {
         {allVisibleRoutes.map(route => {
           if (!route || !route.routeGeometry || route.routeGeometry.length === 0) return null;
           const isFocused = focusedRouteId === route.id;
+          const hasActiveVehicleOnRoute = vehicles.some(v => v.status === 'in_route' && v.currentRouteId === route.id);
 
           const geojson: any = {
             type: 'Feature',
@@ -196,7 +202,7 @@ export function FleetMap() {
                 />
               </Source>
 
-              {isFocused && route.stops.map(stop => {
+              {isFocused && hasActiveVehicleOnRoute && route.stops.map(stop => {
                 const vehicleOnRoute = vehicles.find(v => v.currentRouteId === route.id && v.status === 'in_route');
                 const isCompleted = vehicleOnRoute?.completedStops?.has(stop.id) || false;
 
@@ -284,11 +290,11 @@ export function FleetMap() {
           >
             <div className="bg-gradient-to-b from-gray-900 to-gray-800 rounded-lg shadow-2xl border border-gray-700 p-3 min-w-[260px]">
               <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-6 h-6 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
                     {popupInfo.data.stopNumber}
                   </div>
-                  <h3 className="font-bold text-sm text-white">{popupInfo.data.businessName}</h3>
+                  <h3 className="font-bold text-sm text-white truncate" title={popupInfo.data.businessName}>{popupInfo.data.businessName}</h3>
                 </div>
                 <button
                   onClick={() => setPopupInfo(null)}
@@ -297,7 +303,7 @@ export function FleetMap() {
                   <X className="w-4 h-4 text-gray-400" />
                 </button>
               </div>
-              <p className="text-xs text-gray-400 mb-2">{popupInfo.data.address}</p>
+              <p className="text-xs text-gray-400 mb-2 truncate" title={popupInfo.data.address}>{popupInfo.data.address}</p>
               {(() => {
                 const routeWithStop = savedRoutes.find(r =>
                   r.stops.some(s => s.id === popupInfo.data.id)
@@ -312,19 +318,31 @@ export function FleetMap() {
                     const totalStops = routeWithStop.stops.length;
                     const currentStopIndex = Math.floor(vehicleProgress * totalStops);
 
-                    if (stopIndex >= currentStopIndex) {
+                    const isUpcoming = stopIndex >= currentStopIndex;
+                    const isCompleted = vehicleOnRoute.completedStops?.has(popupInfo.data.id) || false;
+
+                    if (isUpcoming) {
                       const stopsUntilThis = stopIndex - currentStopIndex;
                       const estimatedMinutesPerStop = (vehicleOnRoute.eta || 0) / (vehicleOnRoute.stopsRemaining || 1);
                       const etaToThisStop = Math.round(estimatedMinutesPerStop * (stopsUntilThis + 1));
 
                       return (
-                        <div className="pt-2 border-t border-gray-700 space-y-1">
-                          <div className="flex items-center gap-1.5">
-                            <Truck className="w-3 h-3 text-green-400" />
-                            <p className="text-xs text-green-400 font-semibold">{vehicleOnRoute.alias} en route</p>
+                        <div className="pt-2 border-t border-gray-700">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-green-900 text-green-300">
+                              <Truck className="w-3 h-3" /> {vehicleOnRoute.alias}
+                            </span>
+                            <span className="inline-block px-2 py-0.5 rounded text-xs bg-gray-800 text-gray-300">ETA ~{etaToThisStop} min</span>
+                            <span className="inline-block px-2 py-0.5 rounded text-xs bg-gray-800 text-gray-300">{stopsUntilThis} stops away</span>
                           </div>
-                          <p className="text-xs text-gray-400">ETA: ~{etaToThisStop} min</p>
-                          <p className="text-xs text-gray-500">{stopsUntilThis} stops away</p>
+                        </div>
+                      );
+                    }
+
+                    if (isCompleted) {
+                      return (
+                        <div className="pt-2 border-t border-gray-700">
+                          <span className="inline-block px-2 py-0.5 rounded text-xs bg-green-900 text-green-300">Completed</span>
                         </div>
                       );
                     }
@@ -348,13 +366,27 @@ export function FleetMap() {
           >
             <div className="bg-gradient-to-b from-gray-900 to-gray-800 rounded-lg shadow-2xl border border-gray-700 p-3 min-w-[240px]">
               <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <Truck className="w-4 h-4 text-green-400" />
-                  <h3 className="font-bold text-sm text-white">{popupInfo.data.alias}</h3>
+                  <h3 className="font-bold text-sm text-white truncate">{popupInfo.data.alias}</h3>
                 </div>
+                {(() => {
+                  const status = popupInfo.data.status as string;
+                  const statusClass = status === 'in_route'
+                    ? 'bg-blue-900 text-blue-300'
+                    : status === 'available'
+                    ? 'bg-green-900 text-green-300'
+                    : status === 'maintenance'
+                    ? 'bg-orange-900 text-orange-300'
+                    : 'bg-gray-700 text-gray-300';
+                  const label = status === 'in_route' ? 'In Route' : status.charAt(0).toUpperCase() + status.slice(1);
+                  return (
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusClass}`}>{label}</span>
+                  );
+                })()}
                 <button
                   onClick={() => setPopupInfo(null)}
-                  className="p-1 hover:bg-gray-700 rounded transition-colors"
+                  className="p-1 hover:bg-gray-700 rounded transition-colors ml-2"
                 >
                   <X className="w-4 h-4 text-gray-400" />
                 </button>
@@ -367,25 +399,24 @@ export function FleetMap() {
                     const originWarehouse = warehouses.find(w => w.id === route.originWarehouseId);
                     const destWarehouse = warehouses.find(w => w.id === route.destinationWarehouseId);
                     return (
-                      <>
-                        <p className="text-xs text-blue-400 font-semibold">Route: {route.name}</p>
-                        {originWarehouse && (
-                          <p className="text-xs text-gray-400">From: {originWarehouse.name}</p>
-                        )}
-                        {destWarehouse && (
-                          <p className="text-xs text-gray-400">To: {destWarehouse.name}</p>
-                        )}
-                      </>
+                      <p className="text-xs text-blue-400 font-semibold truncate">
+                        {route.name} {originWarehouse && destWarehouse ? `· ${originWarehouse.name} → ${destWarehouse.name}` : ''}
+                      </p>
                     );
                   }
                   return null;
                 })()}
-                {popupInfo.data.eta && (
-                  <p className="text-xs text-green-400 font-semibold">ETA: {popupInfo.data.eta} min</p>
-                )}
-                {popupInfo.data.stopsRemaining !== undefined && (
-                  <p className="text-xs text-gray-400">Stops remaining: {popupInfo.data.stopsRemaining}</p>
-                )}
+                <div className="flex items-center gap-2 flex-wrap pt-1">
+                  {popupInfo.data.eta && (
+                    <span className="inline-block px-2 py-0.5 rounded text-xs bg-green-900 text-green-300">ETA {popupInfo.data.eta} min</span>
+                  )}
+                  {popupInfo.data.stopsRemaining !== undefined && (
+                    <span className="inline-block px-2 py-0.5 rounded text-xs bg-gray-800 text-gray-300">{popupInfo.data.stopsRemaining} stops left</span>
+                  )}
+                  {popupInfo.data.routeProgress !== undefined && (
+                    <span className="inline-block px-2 py-0.5 rounded text-xs bg-gray-800 text-gray-300">{Math.round((popupInfo.data.routeProgress || 0) * 100)}%</span>
+                  )}
+                </div>
               </div>
             </div>
           </Popup>
