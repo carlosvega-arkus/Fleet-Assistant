@@ -158,7 +158,7 @@ export function FleetMap() {
                 <div className={`relative w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white shadow-2xl border-2 ${isFocused ? 'border-blue-400 scale-125' : 'border-white'} transition-all`}>
                   <Warehouse className="w-5 h-5" />
                 </div>
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 whitespace-nowrap bg-gray-900 text-white text-xs px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 whitespace-nowrap bg-gray-900/90 text-white text-xs px-2 py-1 rounded shadow-lg border border-gray-700">
                   {warehouse.name}
                 </div>
               </div>
