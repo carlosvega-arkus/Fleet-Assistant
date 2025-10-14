@@ -9,7 +9,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 export function FleetMap() {
-  const { warehouses, vehicles, savedRoutes, visibleRouteIds, focusedRouteId, focusedWarehouseId, focusedVehicleId, setFocusedVehicle } = useFleet();
+  const { warehouses, vehicles, savedRoutes, visibleRouteIds, focusedRouteId, focusedWarehouseId, focusedVehicleId, setFocusedVehicle, setFocusedWarehouse } = useFleet();
   const mapRef = useRef<any>(null);
   const [popupInfo, setPopupInfo] = useState<any>(null);
   const [show3D, setShow3D] = useState(false);
@@ -152,7 +152,10 @@ export function FleetMap() {
             >
               <div
                 className="relative group cursor-pointer"
-                onClick={() => setPopupInfo({ type: 'warehouse', data: warehouse })}
+                onClick={() => {
+                  setPopupInfo({ type: 'warehouse', data: warehouse });
+                  setFocusedWarehouse(warehouse.id);
+                }}
               >
                 {isFocused && (
                   <div className="absolute inset-0 w-14 h-14 bg-blue-500 rounded-full opacity-20 animate-pulse -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"></div>
@@ -160,11 +163,9 @@ export function FleetMap() {
                 <div className={`relative w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white shadow-2xl border-2 ${isFocused ? 'border-blue-400 scale-125' : 'border-white'} transition-all`}>
                   <Warehouse className="w-5 h-5" />
                 </div>
-                {isFocused && (
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 whitespace-nowrap bg-gray-900/90 text-white text-xs px-2 py-1 rounded shadow-lg border border-gray-700">
-                    {warehouse.name}
-                  </div>
-                )}
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 whitespace-nowrap bg-gray-900/90 text-white text-xs px-2 py-1 rounded shadow-lg border border-gray-700">
+                  {warehouse.name}
+                </div>
               </div>
             </Marker>
           );
