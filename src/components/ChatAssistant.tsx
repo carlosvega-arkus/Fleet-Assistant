@@ -6,6 +6,49 @@ import { analyzeRouteEfficiency, suggestBestVehicle } from '../services/routeCal
 import { DataTable } from './DataTable';
 import { RouteTableData, VehicleTableData, WarehouseTableData } from '../types';
 
+function extractFirstJsonBlock(text: string): { jsonText: string; start: number; end: number } | null {
+  const start = text.indexOf('{');
+  if (start === -1) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (ch === '\\') {
+        escaped = true;
+      } else if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (ch === '{') depth++;
+    if (ch === '}') depth--;
+    if (depth === 0) {
+      const jsonText = text.slice(start, i + 1);
+      return { jsonText, start, end: i };
+    }
+  }
+
+  return null;
+}
+
+function stripCodeFences(text: string): string {
+  // Remove any fenced code blocks like ```json ... ``` or ``` ... ```
+  return text.replace(/```[a-zA-Z]*[\s\S]*?```/g, '').trim();
+}
+
 const formatMessageContent = (content: string, isUser: boolean): JSX.Element => {
   const lines = content.split('\n');
   const elements: JSX.Element[] = [];
@@ -79,7 +122,7 @@ export function ChatAssistant() {
   const [pendingDispatch, setPendingDispatch] = useState<{ vehicleId: string; routeId: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { chatMessages, addChatMessage, vehicles, savedRoutes, warehouses, toggleRouteVisibility, setFocusedRoute, dispatchVehicle } = useFleet();
+  const { chatMessages, addChatMessage, vehicles, savedRoutes, warehouses, toggleRouteVisibility, setFocusedRoute, dispatchVehicle, visibleRouteIds } = useFleet();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -143,9 +186,9 @@ ${efficiencyAnalysis}`;
 
   const handleAction = (actionText: string) => {
     try {
-      const jsonMatch = actionText.match(/\{[^}]+\}/);
-      if (jsonMatch) {
-        const action = JSON.parse(jsonMatch[0]);
+      const block = extractFirstJsonBlock(actionText);
+      if (block) {
+        const action = JSON.parse(block.jsonText);
 
         if (action.action === 'show_route' && action.params?.routeId) {
           const routeId = action.params.routeId.toLowerCase();
@@ -191,10 +234,7 @@ ${efficiencyAnalysis}`;
           if (route) {
             const suggestedVehicle = suggestBestVehicle(route, vehicles);
             if (suggestedVehicle) {
-              addChatMessage({
-                type: 'assistant',
-                content: `I recommend dispatching ${suggestedVehicle.alias} (${suggestedVehicle.licensePlate}) for ${route.name}. Would you like me to dispatch it?`
-              });
+              setPendingDispatch({ vehicleId: suggestedVehicle.alias, routeId: route.id });
               return true;
             }
           }
@@ -285,7 +325,17 @@ ${efficiencyAnalysis}`;
       }
     }
 
-    return { content: response.replace(/\{[^}]+\}/, '').trim() || response };
+    const block = extractFirstJsonBlock(response);
+    let content = response;
+    if (block) {
+      content = (response.slice(0, block.start) + response.slice(block.end + 1));
+    }
+    content = stripCodeFences(content).trim();
+    // Avoid stray brace-only outputs
+    if (!content || content.replace(/[{}\s]/g, '') === '') {
+      content = 'Action executed.';
+    }
+    return { content };
   };
 
   const handleSend = async () => {
@@ -302,6 +352,41 @@ ${efficiencyAnalysis}`;
     });
 
     try {
+      // Pre-validate intent: if user mentions a warehouse AND a specific route, ensure route destination matches the warehouse
+      const routeIdMatch = userMessage.match(/\brt[-_ ]?\d{3}\b/i);
+      const mentionedWarehouse = warehouses.find(w => lowerMessage.includes(w.name.toLowerCase()));
+
+      if (routeIdMatch && mentionedWarehouse) {
+        const normalizedRouteId = routeIdMatch[0].toLowerCase().replace(/[-_ ]/, '-');
+        const pickedRoute = savedRoutes.find(r => r.id === normalizedRouteId);
+        if (pickedRoute && pickedRoute.destinationWarehouseId !== mentionedWarehouse.id) {
+          const origin = warehouses.find(w => w.id === pickedRoute.originWarehouseId)?.name || pickedRoute.originWarehouseId;
+          const dest = warehouses.find(w => w.id === pickedRoute.destinationWarehouseId)?.name || pickedRoute.destinationWarehouseId;
+          const candidateRoute = savedRoutes.find(r => r.destinationWarehouseId === mentionedWarehouse.id) || null;
+
+          if (candidateRoute) {
+            const suggestedVehicle = suggestBestVehicle(candidateRoute, vehicles);
+            if (suggestedVehicle) {
+              setPendingDispatch({ vehicleId: suggestedVehicle.alias, routeId: candidateRoute.id });
+            }
+
+            addChatMessage({
+              type: 'assistant',
+              content: `Note: ${pickedRoute.id.toUpperCase()} goes from ${origin} to ${dest}. To send a vehicle to ${mentionedWarehouse.name}, use ${candidateRoute.id.toUpperCase()} (${candidateRoute.name}).${suggestedVehicle ? `\n\nI recommend dispatching ${suggestedVehicle!.alias} (${suggestedVehicle!.licensePlate}). Would you like me to dispatch it?` : ''}`
+            });
+
+            setIsProcessing(false);
+            return;
+          } else {
+            addChatMessage({
+              type: 'assistant',
+              content: `Note: ${pickedRoute.id.toUpperCase()} goes from ${origin} to ${dest}. I couldn't find a saved route ending at ${mentionedWarehouse.name}.`
+            });
+            setIsProcessing(false);
+            return;
+          }
+        }
+      }
       if (pendingDispatch && (lowerMessage === 'yes' || lowerMessage === 'confirm' || lowerMessage === 'dispatch' || lowerMessage === 'send it' || lowerMessage === 'si' || lowerMessage === 'ok')) {
         const routeId = pendingDispatch.routeId.toLowerCase();
         let vehicleId = pendingDispatch.vehicleId;
@@ -339,11 +424,18 @@ ${efficiencyAnalysis}`;
 
         const parsed = parseStructuredResponse(userMessage, response);
 
-        if (lowerMessage.includes('best vehicle') || lowerMessage.includes('which vehicle') || lowerMessage.includes('what vehicle') || lowerMessage.includes('send') || lowerMessage.includes('want to')) {
+        if (
+          lowerMessage.includes('best vehicle') ||
+          lowerMessage.includes('which vehicle') ||
+          lowerMessage.includes('what vehicle') ||
+          lowerMessage.includes('send a vehicle') ||
+          lowerMessage.includes('dispatch') ||
+          lowerMessage.includes('want to')
+        ) {
           try {
-            const jsonMatch = response.match(/\{[^}]+\}/);
-            if (jsonMatch) {
-              const suggestion = JSON.parse(jsonMatch[0]);
+            const block = extractFirstJsonBlock(response);
+            if (block) {
+              const suggestion = JSON.parse(block.jsonText);
               if (suggestion.action === 'suggest_vehicle' && suggestion.params?.vehicleId && suggestion.params?.routeId) {
                 const vehicleId = suggestion.params.vehicleId;
                 const routeId = suggestion.params.routeId;
@@ -355,11 +447,14 @@ ${efficiencyAnalysis}`;
           }
         }
 
-        addChatMessage({
-          type: 'assistant',
-          content: parsed.content,
-          structuredData: parsed.structuredData
-        });
+        // Avoid duplicating a separate recommendation if Gemini already produced a formatted recommendation
+        if (parsed.content) {
+          addChatMessage({
+            type: 'assistant',
+            content: parsed.content,
+            structuredData: parsed.structuredData
+          });
+        }
       }
     } catch (error) {
       addChatMessage({
@@ -493,7 +588,6 @@ ${efficiencyAnalysis}`;
             onKeyPress={handleKeyPress}
             placeholder="Type a message..."
             className="flex-1 px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm placeholder-gray-400 transition-all text-white"
-            disabled={isProcessing}
           />
           <button
             onClick={() => {
