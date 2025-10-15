@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import Map, { Marker, Source, Layer, Popup, NavigationControl } from 'react-map-gl';
 import mapboxgl from 'mapbox-gl';
 import { useFleet } from '../context/FleetContext';
-import { Warehouse, Truck, X, Box, Eye } from 'lucide-react';
+import { Warehouse, Truck, X, Box, Eye, Battery, Zap, Gauge, ThermometerSun, Radio } from 'lucide-react';
 import { WarehouseInfoPopup } from './WarehouseInfoPopup';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
@@ -364,60 +364,154 @@ export function FleetMap() {
             anchor="bottom"
             offset={15}
           >
-            <div className="bg-gradient-to-b from-gray-900 to-gray-800 rounded-lg shadow-2xl border border-gray-700 p-3 min-w-[240px]">
-              <div className="flex items-center justify-between mb-2">
+            <div className="bg-gradient-to-b from-gray-900 to-gray-800 rounded-lg shadow-2xl border border-gray-700 p-4 min-w-[320px]">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2 min-w-0">
-                  <Truck className="w-4 h-4 text-green-400" />
-                  <h3 className="font-bold text-sm text-white truncate">{popupInfo.data.alias}</h3>
+                  <Truck className="w-5 h-5 text-blue-400" />
+                  <div>
+                    <h3 className="font-bold text-base text-white">{popupInfo.data.alias}</h3>
+                    <p className="text-xs text-gray-400 font-mono">{popupInfo.data.licensePlate}</p>
+                  </div>
                 </div>
-                {(() => {
-                  const status = popupInfo.data.status as string;
-                  const statusClass = status === 'in_route'
-                    ? 'bg-blue-900 text-blue-300'
-                    : status === 'available'
-                    ? 'bg-green-900 text-green-300'
-                    : status === 'maintenance'
-                    ? 'bg-orange-900 text-orange-300'
-                    : 'bg-gray-700 text-gray-300';
-                  const label = status === 'in_route' ? 'In Route' : status.charAt(0).toUpperCase() + status.slice(1);
-                  return (
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusClass}`}>{label}</span>
-                  );
-                })()}
                 <button
                   onClick={() => setPopupInfo(null)}
-                  className="p-1 hover:bg-gray-700 rounded transition-colors ml-2"
+                  className="p-1 hover:bg-gray-700 rounded transition-colors"
                 >
                   <X className="w-4 h-4 text-gray-400" />
                 </button>
               </div>
-              <div className="space-y-1">
-                <p className="text-xs text-gray-400">Plate: {popupInfo.data.licensePlate}</p>
-                {(() => {
-                  const route = savedRoutes.find(r => r.id === popupInfo.data.currentRouteId);
-                  if (route) {
-                    const originWarehouse = warehouses.find(w => w.id === route.originWarehouseId);
-                    const destWarehouse = warehouses.find(w => w.id === route.destinationWarehouseId);
-                    return (
-                      <p className="text-xs text-blue-400 font-semibold truncate">
-                        {route.name} {originWarehouse && destWarehouse ? `· ${originWarehouse.name} → ${destWarehouse.name}` : ''}
-                      </p>
-                    );
-                  }
-                  return null;
-                })()}
-                <div className="flex items-center gap-2 flex-wrap pt-1">
-                  {popupInfo.data.eta && (
-                    <span className="inline-block px-2 py-0.5 rounded text-xs bg-green-900 text-green-300">ETA {popupInfo.data.eta} min</span>
-                  )}
-                  {popupInfo.data.stopsRemaining !== undefined && (
-                    <span className="inline-block px-2 py-0.5 rounded text-xs bg-gray-800 text-gray-300">{popupInfo.data.stopsRemaining} stops left</span>
-                  )}
-                  {popupInfo.data.routeProgress !== undefined && (
-                    <span className="inline-block px-2 py-0.5 rounded text-xs bg-gray-800 text-gray-300">{Math.round((popupInfo.data.routeProgress || 0) * 100)}%</span>
+
+              {(() => {
+                const status = popupInfo.data.status as string;
+                const statusClass = status === 'in_route'
+                  ? 'bg-green-900 text-green-300 border-green-700'
+                  : status === 'available'
+                  ? 'bg-blue-900 text-blue-300 border-blue-700'
+                  : status === 'maintenance'
+                  ? 'bg-orange-900 text-orange-300 border-orange-700'
+                  : 'bg-gray-800 text-gray-300 border-gray-600';
+                const label = status === 'in_route' ? 'In Route' : status.charAt(0).toUpperCase() + status.slice(1);
+                return (
+                  <div className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${statusClass} mb-3 text-center`}>{label}</div>
+                );
+              })()}
+
+              {popupInfo.data.telemetry && (
+                <div className="space-y-2 mb-3 p-3 bg-gray-950 rounded-lg border border-gray-700">
+                  <div className="text-xs font-semibold text-blue-400 mb-2 flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5" />
+                    TELEMETRY DATA
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex items-center gap-2">
+                      <Battery className={`w-4 h-4 ${
+                        popupInfo.data.telemetry.batteryLevel > 50
+                          ? 'text-green-400'
+                          : popupInfo.data.telemetry.batteryLevel > 20
+                          ? 'text-yellow-400'
+                          : 'text-red-400'
+                      }`} />
+                      <div>
+                        <div className={`text-sm font-semibold ${
+                          popupInfo.data.telemetry.batteryLevel > 50
+                            ? 'text-green-400'
+                            : popupInfo.data.telemetry.batteryLevel > 20
+                            ? 'text-yellow-400'
+                            : 'text-red-400'
+                        }`}>
+                          {popupInfo.data.telemetry.batteryLevel}%
+                        </div>
+                        <div className="text-xs text-gray-400">Battery</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Gauge className="w-4 h-4 text-blue-400" />
+                      <div>
+                        <div className="text-sm font-semibold text-white">{popupInfo.data.telemetry.speed} km/h</div>
+                        <div className="text-xs text-gray-400">Speed</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-yellow-400" />
+                      <div>
+                        <div className="text-sm font-semibold text-white">{popupInfo.data.telemetry.range} km</div>
+                        <div className="text-xs text-gray-400">Range</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <ThermometerSun className="w-4 h-4 text-orange-400" />
+                      <div>
+                        <div className="text-sm font-semibold text-white">{popupInfo.data.telemetry.motorTemperature.toFixed(1)}°C</div>
+                        <div className="text-xs text-gray-400">Motor</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-purple-400" />
+                      <div>
+                        <div className="text-sm font-semibold text-white">{popupInfo.data.telemetry.powerConsumption.toFixed(1)} kW</div>
+                        <div className="text-xs text-gray-400">Power</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Radio className="w-4 h-4 text-green-400" />
+                      <div>
+                        <div className="text-sm font-semibold text-white">{popupInfo.data.telemetry.signalStrength}%</div>
+                        <div className="text-xs text-gray-400">Signal</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-gray-700 flex items-center justify-between">
+                    <span className="text-xs text-gray-400">Autonomy Mode</span>
+                    <span className="text-xs font-semibold text-blue-400 uppercase">{popupInfo.data.telemetry.autonomyMode}</span>
+                  </div>
+
+                  {popupInfo.data.telemetry.obstaclesDetected > 0 && (
+                    <div className="pt-1 flex items-center justify-between">
+                      <span className="text-xs text-gray-400">Obstacles Detected</span>
+                      <span className="text-xs font-semibold text-orange-400">{popupInfo.data.telemetry.obstaclesDetected}</span>
+                    </div>
                   )}
                 </div>
-              </div>
+              )}
+
+              {(() => {
+                const route = savedRoutes.find(r => r.id === popupInfo.data.currentRouteId);
+                if (route) {
+                  const originWarehouse = warehouses.find(w => w.id === route.originWarehouseId);
+                  const destWarehouse = warehouses.find(w => w.id === route.destinationWarehouseId);
+                  return (
+                    <div className="space-y-2">
+                      <p className="text-xs text-blue-400 font-semibold">
+                        {route.name}
+                      </p>
+                      {originWarehouse && destWarehouse && (
+                        <p className="text-xs text-gray-400">
+                          {originWarehouse.name} → {destWarehouse.name}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 flex-wrap pt-1">
+                        {popupInfo.data.eta && (
+                          <span className="inline-block px-2 py-1 rounded text-xs bg-green-900 text-green-300 font-medium">ETA {popupInfo.data.eta} min</span>
+                        )}
+                        {popupInfo.data.stopsRemaining !== undefined && (
+                          <span className="inline-block px-2 py-1 rounded text-xs bg-gray-800 text-gray-300">{popupInfo.data.stopsRemaining} stops left</span>
+                        )}
+                        {popupInfo.data.routeProgress !== undefined && (
+                          <span className="inline-block px-2 py-1 rounded text-xs bg-gray-800 text-gray-300">{Math.round((popupInfo.data.routeProgress || 0) * 100)}%</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
           </Popup>
         )}
