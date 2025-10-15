@@ -6,6 +6,7 @@ import { RoutesPanel } from './components/panels/RoutesPanel';
 import { VehiclesPanel } from './components/panels/VehiclesPanel';
 import { DispatchPanel } from './components/panels/DispatchPanel';
 import { ChatAssistant } from './components/ChatAssistant';
+import { IntroModal } from './components/IntroModal';
 import { Menu, Warehouse, Route, Truck, Send, X, MessageSquare } from 'lucide-react';
 
 type Panel = 'warehouses' | 'routes' | 'vehicles' | 'dispatch' | 'chat';
@@ -15,6 +16,7 @@ function App() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [panelWidth, setPanelWidth] = useState(384);
   const [isResizing, setIsResizing] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
   const resizeRef = useRef<HTMLDivElement>(null);
 
   const panels = {
@@ -77,8 +79,8 @@ function App() {
                 <Truck className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">Fleet Control</h1>
-                <p className="text-xs text-gray-400">Real-time Logistics Management</p>
+                <h1 className="text-xl font-bold text-white">Autonomous Fleet Control</h1>
+                <p className="text-xs text-gray-400">AI-Powered Electric Vehicle Management</p>
               </div>
             </div>
 
@@ -167,6 +169,8 @@ function App() {
             </div>
           )}
         </div>
+
+        {showIntro && <IntroModal onClose={() => setShowIntro(false)} />}
       </div>
     </FleetProvider>
   );

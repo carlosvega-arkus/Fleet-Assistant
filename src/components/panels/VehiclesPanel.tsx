@@ -1,4 +1,4 @@
-import { Truck, Clock, MapPin } from 'lucide-react';
+import { Truck, Clock, MapPin, Battery, Zap } from 'lucide-react';
 import { useFleet } from '../../context/FleetContext';
 import { VehicleStatus } from '../../types';
 
@@ -28,7 +28,7 @@ export function VehiclesPanel() {
     <div className="rounded-lg shadow-lg p-4 h-full overflow-y-auto">
       <div className="flex items-center gap-2 mb-4">
         <Truck className="w-5 h-5 text-blue-400" />
-        <h2 className="text-lg font-bold text-white">Vehicles</h2>
+        <h2 className="text-lg font-bold text-white">Autonomous EVs</h2>
         <span className="ml-auto text-sm text-gray-400">{vehicles.length} total</span>
       </div>
 
@@ -61,24 +61,37 @@ export function VehiclesPanel() {
                 </span>
               </div>
 
-              {vehicle.status === 'in_route' && (
-                <div className="mt-2 pt-2 border-t border-gray-800 space-y-1">
-                  {routeName && (
-                    <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                      <MapPin className="w-3 h-3" />
-                      <span>{routeName}</span>
-                    </div>
-                  )}
-                  {vehicle.eta !== undefined && (
-                    <div className="flex items-center gap-1.5 text-xs text-green-400 font-semibold">
-                      <Clock className="w-3 h-3" />
-                      <span>ETA: {vehicle.eta} min</span>
-                    </div>
-                  )}
-                  {vehicle.stopsRemaining !== undefined && (
-                    <div className="text-xs text-gray-400">
-                      Stops remaining: {vehicle.stopsRemaining}
-                    </div>
+              {vehicle.telemetry && (
+                <div className="mt-2 pt-2 border-t border-gray-800 space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <Battery className={`w-3 h-3 ${vehicle.telemetry.batteryLevel > 50 ? 'text-green-400' : vehicle.telemetry.batteryLevel > 20 ? 'text-yellow-400' : 'text-red-400'}`} />
+                    <span className={vehicle.telemetry.batteryLevel > 50 ? 'text-green-400' : vehicle.telemetry.batteryLevel > 20 ? 'text-yellow-400' : 'text-red-400'}>
+                      {vehicle.telemetry.batteryLevel}%
+                    </span>
+                    <span className="text-gray-500">•</span>
+                    <span className="text-gray-400">{vehicle.telemetry.range}km range</span>
+                  </div>
+                  {vehicle.status === 'in_route' && (
+                    <>
+                      <div className="flex items-center gap-1.5 text-xs text-blue-400">
+                        <Zap className="w-3 h-3" />
+                        <span>{vehicle.telemetry.speed}km/h</span>
+                        <span className="text-gray-500">•</span>
+                        <span className="text-gray-400">{vehicle.telemetry.autonomyMode}</span>
+                      </div>
+                      {routeName && (
+                        <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                          <MapPin className="w-3 h-3" />
+                          <span>{routeName}</span>
+                        </div>
+                      )}
+                      {vehicle.eta !== undefined && (
+                        <div className="flex items-center gap-1.5 text-xs text-green-400 font-semibold">
+                          <Clock className="w-3 h-3" />
+                          <span>ETA: {vehicle.eta} min</span>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}

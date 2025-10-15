@@ -135,12 +135,21 @@ export function ChatAssistant() {
   const buildContext = (): string => {
     const vehicleInfo = vehicles.map(v => {
       const route = v.currentRouteId ? savedRoutes.find(r => r.id === v.currentRouteId) : null;
+      const tel = v.telemetry;
       return `- ${v.alias} (ID: ${v.id}, License: ${v.licensePlate})
   Status: ${v.status}${v.status === 'in_route' ? `
   Current Route: ${route?.name || v.currentRouteId}
   ETA: ${v.eta} minutes
   Stops Remaining: ${v.stopsRemaining}
-  Progress: ${Math.round((v.routeProgress || 0) * 100)}%` : ''}`;
+  Progress: ${Math.round((v.routeProgress || 0) * 100)}%` : ''}${tel ? `
+  TELEMETRY:
+    Battery: ${tel.batteryLevel}% (${tel.range}km range, ${tel.batteryTemperature.toFixed(1)}°C)
+    Speed: ${tel.speed}km/h
+    Motor Temp: ${tel.motorTemperature.toFixed(1)}°C
+    Power: ${tel.powerConsumption.toFixed(1)}kW
+    Autonomy: ${tel.autonomyMode}
+    Obstacles: ${tel.obstaclesDetected}
+    Signal: ${tel.signalStrength}%` : ''}`;
     }).join('\n');
 
     const routeInfo = savedRoutes.map(r => {
@@ -169,9 +178,10 @@ export function ChatAssistant() {
 
     const efficiencyAnalysis = analyzeRouteEfficiency(savedRoutes, vehicles);
 
-    return `FLEET MANAGEMENT SYSTEM DATA:
+    return `AUTONOMOUS ELECTRIC FLEET MANAGEMENT SYSTEM DATA:
 
-=== VEHICLES (${vehicles.length} total) ===
+=== AUTONOMOUS ELECTRIC VEHICLES (${vehicles.length} total) ===
+Note: All vehicles are autonomous electric vehicles with real-time telemetry monitoring.
 ${vehicleInfo}
 
 === ROUTES (${savedRoutes.length} total) ===

@@ -1,4 +1,23 @@
-import { Warehouse, SavedRoute, Vehicle } from '../types';
+import { Warehouse, SavedRoute, Vehicle, VehicleTelemetry } from '../types';
+
+const generateTelemetry = (status: string, routeProgress?: number): VehicleTelemetry => {
+  const isActive = status === 'in_route';
+  const baseSpeed = isActive ? 35 + Math.random() * 25 : 0;
+  const baseBattery = status === 'maintenance' ? 15 + Math.random() * 20 : 60 + Math.random() * 35;
+
+  return {
+    batteryLevel: Math.round(baseBattery),
+    batteryTemperature: 22 + Math.random() * 8,
+    speed: Math.round(baseSpeed),
+    range: Math.round((baseBattery / 100) * 350), // Max range 350km
+    motorTemperature: isActive ? 45 + Math.random() * 15 : 25 + Math.random() * 5,
+    powerConsumption: isActive ? 12 + Math.random() * 8 : 0.5 + Math.random() * 1.5,
+    autonomyMode: isActive ? 'full' : 'assisted',
+    obstaclesDetected: isActive ? Math.floor(Math.random() * 3) : 0,
+    signalStrength: 75 + Math.floor(Math.random() * 25),
+    lastUpdate: new Date()
+  };
+};
 
 export const warehouses: Warehouse[] = [
   {
@@ -192,7 +211,8 @@ export const initialVehicles: Vehicle[] = [
     currentRouteId: 'rt-002',
     routeProgress: 0.3,
     stopsRemaining: 2,
-    eta: 18
+    eta: 18,
+    telemetry: generateTelemetry('in_route', 0.3)
   },
   {
     id: 'veh-002',
@@ -202,7 +222,8 @@ export const initialVehicles: Vehicle[] = [
     currentRouteId: 'rt-004',
     routeProgress: 0.6,
     stopsRemaining: 1,
-    eta: 12
+    eta: 12,
+    telemetry: generateTelemetry('in_route', 0.6)
   },
   {
     id: 'veh-003',
@@ -212,48 +233,56 @@ export const initialVehicles: Vehicle[] = [
     currentRouteId: 'rt-001',
     routeProgress: 0.15,
     stopsRemaining: 3,
-    eta: 25
+    eta: 25,
+    telemetry: generateTelemetry('in_route', 0.15)
   },
   {
     id: 'veh-004',
     alias: 'U-12',
     licensePlate: 'CA-5544',
     status: 'available',
+    telemetry: generateTelemetry('available')
   },
   {
     id: 'veh-005',
     alias: 'U-89',
     licensePlate: 'CA-3355',
     status: 'idle',
+    telemetry: generateTelemetry('idle')
   },
   {
     id: 'veh-006',
     alias: 'U-34',
     licensePlate: 'CA-6677',
     status: 'available',
+    telemetry: generateTelemetry('available')
   },
   {
     id: 'veh-007',
     alias: 'U-56',
     licensePlate: 'CA-2211',
     status: 'idle',
+    telemetry: generateTelemetry('idle')
   },
   {
     id: 'veh-008',
     alias: 'U-78',
     licensePlate: 'CA-4499',
     status: 'maintenance',
+    telemetry: generateTelemetry('maintenance')
   },
   {
     id: 'veh-009',
     alias: 'U-90',
     licensePlate: 'CA-8800',
     status: 'available',
+    telemetry: generateTelemetry('available')
   },
   {
     id: 'veh-010',
     alias: 'U-11',
     licensePlate: 'CA-1122',
     status: 'idle',
+    telemetry: generateTelemetry('idle')
   }
 ];

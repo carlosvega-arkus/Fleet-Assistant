@@ -30,6 +30,19 @@ export interface SavedRoute {
   color: string;
 }
 
+export interface VehicleTelemetry {
+  batteryLevel: number; // 0-100
+  batteryTemperature: number; // Celsius
+  speed: number; // km/h
+  range: number; // km remaining
+  motorTemperature: number; // Celsius
+  powerConsumption: number; // kW
+  autonomyMode: 'full' | 'assisted' | 'manual';
+  obstaclesDetected: number;
+  signalStrength: number; // 0-100
+  lastUpdate: Date;
+}
+
 export interface Vehicle {
   id: string;
   alias: string;
@@ -41,6 +54,7 @@ export interface Vehicle {
   stopsRemaining?: number;
   routeProgress?: number;
   completedStops?: Set<string>;
+  telemetry?: VehicleTelemetry;
 }
 
 export interface ChatMessage {
