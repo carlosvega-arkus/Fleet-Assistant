@@ -101,7 +101,7 @@ function App() {
                     className={`px-5 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center gap-2 ${
                       activePanel === key
                         ? 'bg-gradient-arkus text-white shadow-lg scale-105'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
+                        : 'bg-white text-gray-800 hover:bg-gray-50 hover:text-gray-900 border border-gray-300'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -126,7 +126,7 @@ function App() {
                     className={`w-full px-4 py-3 rounded-lg font-medium text-sm transition-all flex items-center gap-3 ${
                       activePanel === key
                         ? 'bg-gradient-arkus text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-white text-gray-800 hover:bg-gray-50 border border-gray-300'
                     }`}
                   >
                     <Icon className="w-5 h-5" />
