@@ -508,7 +508,7 @@ ${efficiencyAnalysis}`;
             <Bot className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-base font-semibold bg-gradient-arkus bg-clip-text text-transparent">Fleet AI Assistant</h2>
+            <h2 className="text-base font-semibold text-gray-900">Fleet AI Assistant</h2>
             <p className="text-xs text-green-500 flex items-center gap-1">
               <span className="w-2 h-2 bg-green-500 rounded-full"></span>
               Online

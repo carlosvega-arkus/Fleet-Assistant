@@ -48,7 +48,7 @@ export function DispatchPanel() {
     <div className="rounded-lg shadow-lg p-4 h-full overflow-y-auto">
       <div className="flex items-center gap-2 mb-4">
         <Send className="w-5 h-5 text-arkus-fuchsia" />
-        <h2 className="text-lg font-bold bg-gradient-arkus bg-clip-text text-transparent">Dispatch Vehicle</h2>
+        <h2 className="text-lg font-bold text-gray-900">Dispatch Vehicle</h2>
       </div>
 
       <div className="space-y-4">

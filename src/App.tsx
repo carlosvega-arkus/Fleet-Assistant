@@ -79,7 +79,7 @@ function App() {
                 <Truck className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold bg-gradient-arkus bg-clip-text text-transparent">Autonomous Fleet Control</h1>
+                <h1 className="text-xl font-bold text-gray-900">Autonomous Fleet Control</h1>
                 <p className="text-xs text-gray-600">AI-Powered Electric Vehicle Management</p>
               </div>
             </div>
