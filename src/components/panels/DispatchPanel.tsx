@@ -47,20 +47,20 @@ export function DispatchPanel() {
   return (
     <div className="rounded-lg shadow-lg p-4 h-full overflow-y-auto">
       <div className="flex items-center gap-2 mb-4">
-        <Send className="w-5 h-5 text-blue-400" />
-        <h2 className="text-lg font-bold text-white">Dispatch Vehicle</h2>
+        <Send className="w-5 h-5 text-arkus-fuchsia" />
+        <h2 className="text-lg font-bold bg-gradient-arkus bg-clip-text text-transparent">Dispatch Vehicle</h2>
       </div>
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             <Truck className="w-4 h-4 inline mr-1" />
             Select Vehicle
           </label>
           <select
             value={selectedVehicle}
             onChange={(e) => setSelectedVehicle(e.target.value)}
-            className="w-full px-3 py-2 bg-gray-900 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            className="w-full px-3 py-2 bg-white border border-gray-300 text-gray-900 rounded-lg focus:ring-2 focus:ring-arkus-fuchsia focus:border-arkus-fuchsia text-sm"
           >
             <option value="">Choose a vehicle...</option>
             {availableVehicles.map(vehicle => (
@@ -72,14 +72,14 @@ export function DispatchPanel() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             <Route className="w-4 h-4 inline mr-1" />
             Select Route
           </label>
           <select
             value={selectedRoute}
             onChange={(e) => handleRouteSelect(e.target.value)}
-            className="w-full px-3 py-2 bg-gray-900 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            className="w-full px-3 py-2 bg-white border border-gray-300 text-gray-900 rounded-lg focus:ring-2 focus:ring-arkus-fuchsia focus:border-arkus-fuchsia text-sm"
           >
             <option value="">Choose a route...</option>
             {savedRoutes.map(route => (
@@ -93,15 +93,15 @@ export function DispatchPanel() {
         <button
           onClick={handleDispatch}
           disabled={!selectedVehicle || !selectedRoute}
-          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
+          className="w-full px-4 py-2 bg-gradient-arkus text-white rounded-lg font-medium hover:shadow-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
           <Send className="w-4 h-4 inline mr-2" />
           Start Dispatch
         </button>
 
         {availableVehicles.length === 0 && (
-          <div className="mt-4 p-3 bg-yellow-900 border border-yellow-700 rounded-lg">
-            <p className="text-sm text-yellow-300">
+          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-300 rounded-lg">
+            <p className="text-sm text-yellow-800">
               No vehicles available for dispatch. All vehicles are either en route or in maintenance.
             </p>
           </div>

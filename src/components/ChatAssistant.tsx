@@ -62,7 +62,7 @@ const formatMessageContent = (content: string, isUser: boolean): JSX.Element => 
     if (line.startsWith('**') && line.endsWith('**')) {
       const text = line.replace(/\*\*/g, '');
       elements.push(
-        <div key={index} className={`font-bold mt-2 mb-1.5 text-sm ${isUser ? 'text-white' : 'text-white'}`}>
+        <div key={index} className={`font-bold mt-2 mb-1.5 text-sm ${isUser ? 'text-white' : 'text-gray-900'}`}>
           {text}
         </div>
       );
@@ -71,11 +71,11 @@ const formatMessageContent = (content: string, isUser: boolean): JSX.Element => 
       const parts = text.split(/(\*\*.*?\*\*)/g);
       elements.push(
         <div key={index} className="flex items-start gap-2 mb-1">
-          <span className={`text-sm ${isUser ? 'text-white' : 'text-green-400'}`}>✓</span>
-          <span className={`text-sm leading-relaxed ${isUser ? 'text-white' : 'text-gray-300'}`}>
+          <span className={`text-sm ${isUser ? 'text-white' : 'text-green-500'}`}>✓</span>
+          <span className={`text-sm leading-relaxed ${isUser ? 'text-white' : 'text-gray-700'}`}>
             {parts.map((part, i) => {
               if (part.startsWith('**') && part.endsWith('**')) {
-                return <strong key={i} className={`font-semibold ${isUser ? 'text-white' : 'text-white'}`}>{part.replace(/\*\*/g, '')}</strong>;
+                return <strong key={i} className={`font-semibold ${isUser ? 'text-white' : 'text-gray-900'}`}>{part.replace(/\*\*/g, '')}</strong>;
               }
               return <span key={i}>{part}</span>;
             })}
@@ -87,11 +87,11 @@ const formatMessageContent = (content: string, isUser: boolean): JSX.Element => 
       const parts = text.split(/(\*\*.*?\*\*)/g);
       elements.push(
         <div key={index} className="flex items-start gap-2 ml-2 mb-1">
-          <Circle className={`w-1.5 h-1.5 mt-1.5 flex-shrink-0 ${isUser ? 'fill-white text-white' : 'fill-blue-400 text-blue-400'}`} />
-          <span className={`text-sm leading-relaxed ${isUser ? 'text-white' : 'text-gray-300'}`}>
+          <Circle className={`w-1.5 h-1.5 mt-1.5 flex-shrink-0 ${isUser ? 'fill-white text-white' : 'fill-arkus-blue text-arkus-blue'}`} />
+          <span className={`text-sm leading-relaxed ${isUser ? 'text-white' : 'text-gray-700'}`}>
             {parts.map((part, i) => {
               if (part.startsWith('**') && part.endsWith('**')) {
-                return <strong key={i} className={`font-semibold ${isUser ? 'text-white' : 'text-white'}`}>{part.replace(/\*\*/g, '')}</strong>;
+                return <strong key={i} className={`font-semibold ${isUser ? 'text-white' : 'text-gray-900'}`}>{part.replace(/\*\*/g, '')}</strong>;
               }
               return <span key={i}>{part}</span>;
             })}
@@ -101,10 +101,10 @@ const formatMessageContent = (content: string, isUser: boolean): JSX.Element => 
     } else {
       const parts = line.split(/(\*\*.*?\*\*)/g);
       elements.push(
-        <div key={index} className={`text-sm leading-relaxed mb-0.5 ${isUser ? 'text-white' : 'text-gray-300'}`}>
+        <div key={index} className={`text-sm leading-relaxed mb-0.5 ${isUser ? 'text-white' : 'text-gray-700'}`}>
           {parts.map((part, i) => {
             if (part.startsWith('**') && part.endsWith('**')) {
-              return <strong key={i} className={`font-semibold ${isUser ? 'text-white' : 'text-white'}`}>{part.replace(/\*\*/g, '')}</strong>;
+              return <strong key={i} className={`font-semibold ${isUser ? 'text-white' : 'text-gray-900'}`}>{part.replace(/\*\*/g, '')}</strong>;
             }
             return <span key={i}>{part}</span>;
           })}
@@ -501,14 +501,14 @@ ${efficiencyAnalysis}`;
   ];
 
   return (
-    <div className="flex flex-col h-full bg-gray-800 text-white">
-      <div className="px-4 py-3 bg-gray-900 border-b border-gray-700 shadow-lg">
+    <div className="flex flex-col h-full bg-white text-gray-900">
+      <div className="px-4 py-3 bg-white border-b border-gray-200 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-md">
+          <div className="w-11 h-11 bg-gradient-arkus rounded-full flex items-center justify-center shadow-md">
             <Bot className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-white">Fleet AI Assistant</h2>
+            <h2 className="text-base font-semibold bg-gradient-arkus bg-clip-text text-transparent">Fleet AI Assistant</h2>
             <p className="text-xs text-green-500 flex items-center gap-1">
               <span className="w-2 h-2 bg-green-500 rounded-full"></span>
               Online
@@ -524,7 +524,7 @@ ${efficiencyAnalysis}`;
             className={`flex gap-2 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             {message.type === 'assistant' && (
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+              <div className="w-8 h-8 bg-gradient-arkus rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
                 <Bot className="w-4 h-4 text-white" />
               </div>
             )}
@@ -532,8 +532,8 @@ ${efficiencyAnalysis}`;
               <div
                 className={`rounded-2xl px-4 py-2.5 shadow-lg ${
                   message.type === 'user'
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-br-sm'
-                    : 'bg-gray-900 text-gray-100 border border-gray-700 rounded-tl-sm'
+                    ? 'bg-gradient-arkus text-white rounded-br-sm'
+                    : 'bg-gray-50 text-gray-800 border border-gray-200 rounded-tl-sm'
                 }`}
               >
                 {message.content && (
@@ -545,27 +545,27 @@ ${efficiencyAnalysis}`;
                   <DataTable data={message.structuredData} />
                 )}
               </div>
-              <div className={`text-xs text-gray-400 mt-1 px-2 ${message.type === 'user' ? 'text-right' : 'text-left'}`}>
+              <div className={`text-xs text-gray-500 mt-1 px-2 ${message.type === 'user' ? 'text-right' : 'text-left'}`}>
                 {formatTime(message.timestamp)}
               </div>
             </div>
             {message.type === 'user' && (
-              <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
-                <User className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                <User className="w-4 h-4 text-gray-700" />
               </div>
             )}
           </div>
         ))}
         {isProcessing && (
           <div className="flex gap-2 justify-start">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+            <div className="w-8 h-8 bg-gradient-arkus rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
               <Bot className="w-4 h-4 text-white" />
             </div>
-            <div className="bg-gray-900 border border-gray-700 rounded-2xl rounded-tl-sm px-4 py-3 shadow-lg">
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-lg">
               <div className="flex gap-1.5">
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                <div className="w-2 h-2 bg-arkus-fuchsia rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-arkus-fuchsia rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                <div className="w-2 h-2 bg-arkus-fuchsia rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
               </div>
             </div>
           </div>
@@ -573,7 +573,7 @@ ${efficiencyAnalysis}`;
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-3 bg-gray-900 border-t border-gray-700">
+      <div className="p-3 bg-white border-t border-gray-200">
         <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
           {quickActions.map((action, idx) => (
             <button
@@ -582,7 +582,7 @@ ${efficiencyAnalysis}`;
                 setInput(action);
                 inputRef.current?.focus();
               }}
-              className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-blue-400 rounded-full text-xs whitespace-nowrap transition-colors border border-gray-700"
+              className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-arkus-blue rounded-full text-xs whitespace-nowrap transition-colors border border-gray-200"
             >
               {action}
             </button>
@@ -597,7 +597,7 @@ ${efficiencyAnalysis}`;
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Type a message..."
-            className="flex-1 px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm placeholder-gray-400 transition-all text-white"
+            className="flex-1 px-4 py-2.5 bg-gray-100 border border-gray-300 rounded-full focus:ring-2 focus:ring-arkus-fuchsia focus:border-arkus-fuchsia text-sm placeholder-gray-500 transition-all text-gray-900"
           />
           <button
             onClick={() => {
@@ -607,7 +607,7 @@ ${efficiencyAnalysis}`;
               }, 0);
             }}
             disabled={!input.trim() || isProcessing}
-            className="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-full hover:from-blue-700 hover:to-blue-600 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed transition-all flex items-center justify-center shadow-lg"
+            className="w-10 h-10 bg-gradient-arkus text-white rounded-full hover:shadow-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center shadow-lg"
           >
             <Send className="w-4 h-4" />
           </button>
