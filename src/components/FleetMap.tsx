@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import Map, { Marker, Source, Layer, Popup, NavigationControl } from 'react-map-gl';
 import mapboxgl from 'mapbox-gl';
 import { useFleet } from '../context/FleetContext';
-import { Warehouse, Truck, X, Box, Eye, Battery, Zap, Gauge, ThermometerSun, Radio } from 'lucide-react';
+import { Warehouse, Truck, X, Box, Eye, Battery, Zap, Gauge, ThermometerSun, Radio, MapPin } from 'lucide-react';
 import { WarehouseInfoPopup } from './WarehouseInfoPopup';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
@@ -467,17 +467,31 @@ export function FleetMap() {
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-gray-700 flex items-center justify-between">
-                    <span className="text-xs text-gray-400">Autonomy Mode</span>
-                    <span className="text-xs font-semibold text-blue-400 uppercase">{popupInfo.data.telemetry.autonomyMode}</span>
-                  </div>
-
-                  {popupInfo.data.telemetry.obstaclesDetected > 0 && (
-                    <div className="pt-1 flex items-center justify-between">
-                      <span className="text-xs text-gray-400">Obstacles Detected</span>
-                      <span className="text-xs font-semibold text-orange-400">{popupInfo.data.telemetry.obstaclesDetected}</span>
+                  <div className="pt-2 border-t border-gray-700 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-400">Autonomy Mode</span>
+                      <span className="text-xs font-semibold text-blue-400 uppercase">{popupInfo.data.telemetry.autonomyMode}</span>
                     </div>
-                  )}
+
+                    {popupInfo.data.telemetry.obstaclesDetected > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-400">Obstacles Detected</span>
+                        <span className="text-xs font-semibold text-orange-400">{popupInfo.data.telemetry.obstaclesDetected}</span>
+                      </div>
+                    )}
+
+                    {popupInfo.data.currentPosition && (
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-xs text-gray-400 flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          GPS Position
+                        </span>
+                        <span className="text-xs font-mono text-gray-300">
+                          {popupInfo.data.currentPosition.lat.toFixed(4)}, {popupInfo.data.currentPosition.lng.toFixed(4)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
