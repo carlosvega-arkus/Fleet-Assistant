@@ -67,13 +67,13 @@ export function IntroModal({ onClose }: IntroModalProps) {
 
         <div className="p-8">
           <div className="flex items-center justify-center mb-6">
-            <div className="w-20 h-20 bg-gradient-arkus rounded-2xl flex items-center justify-center shadow-lg">
+            <div className="w-20 h-20 bg-arkus-scarlet rounded-2xl flex items-center justify-center shadow-lg">
               <Icon className="w-10 h-10 text-white" />
             </div>
           </div>
 
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold bg-gradient-arkus bg-clip-text text-transparent mb-3">
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">
               {currentStepData.title}
             </h2>
             <p className="text-lg text-gray-700 leading-relaxed">
@@ -88,7 +88,7 @@ export function IntroModal({ onClose }: IntroModalProps) {
                 onClick={() => setCurrentStep(index)}
                 className={`h-2 rounded-full transition-all ${
                   index === currentStep
-                    ? 'w-8 bg-gradient-arkus'
+                    ? 'w-8 bg-arkus-scarlet'
                     : 'w-2 bg-gray-300 hover:bg-gray-400'
                 }`}
               />
@@ -106,7 +106,7 @@ export function IntroModal({ onClose }: IntroModalProps) {
 
             <button
               onClick={handleNext}
-              className="px-8 py-3 bg-gradient-arkus text-white rounded-xl hover:shadow-xl transition-all font-medium shadow-lg"
+              className="px-8 py-3 bg-arkus-scarlet text-white rounded-xl hover:shadow-xl transition-all font-medium shadow-lg"
             >
               {currentStep === steps.length - 1 ? 'Get Started' : 'Next'}
             </button>
@@ -115,7 +115,7 @@ export function IntroModal({ onClose }: IntroModalProps) {
 
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200">
           <div
-            className="h-full bg-gradient-arkus transition-all duration-300"
+            className="h-full bg-arkus-scarlet transition-all duration-300"
             style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
           />
         </div>

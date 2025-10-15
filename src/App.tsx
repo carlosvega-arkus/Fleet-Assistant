@@ -100,7 +100,7 @@ function App() {
                     onClick={() => setActivePanel(activePanel === key ? null : key as Panel)}
                     className={`px-5 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center gap-2 ${
                       activePanel === key
-                        ? 'bg-gradient-arkus text-white shadow-lg scale-105'
+                        ? 'bg-arkus-scarlet text-white shadow-lg scale-105'
                         : 'bg-white text-gray-800 hover:bg-gray-50 hover:text-gray-900 border border-gray-300'
                     }`}
                   >
@@ -125,7 +125,7 @@ function App() {
                     }}
                     className={`w-full px-4 py-3 rounded-lg font-medium text-sm transition-all flex items-center gap-3 ${
                       activePanel === key
-                        ? 'bg-gradient-arkus text-white'
+                        ? 'bg-arkus-scarlet text-white'
                         : 'bg-white text-gray-800 hover:bg-gray-50 border border-gray-300'
                     }`}
                   >
