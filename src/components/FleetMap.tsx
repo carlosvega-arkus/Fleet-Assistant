@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import Map, { Marker, Source, Layer, Popup, NavigationControl } from 'react-map-gl';
 import mapboxgl from 'mapbox-gl';
 import { useFleet } from '../context/FleetContext';
 import { Warehouse, Truck, X, Box, Eye, Battery, Zap, Gauge, ThermometerSun, Radio, MapPin } from 'lucide-react';
 import { WarehouseInfoPopup } from './WarehouseInfoPopup';
 import 'mapbox-gl/dist/mapbox-gl.css';
+// 3D overlays removed
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
@@ -12,8 +13,9 @@ export function FleetMap() {
   const { warehouses, vehicles, savedRoutes, visibleRouteIds, focusedRouteId, focusedWarehouseId, focusedVehicleId, setFocusedVehicle, setFocusedWarehouse } = useFleet();
   const mapRef = useRef<any>(null);
   const [popupInfo, setPopupInfo] = useState<any>(null);
-  const [show3D, setShow3D] = useState(false);
+  const [show3D, setShow3D] = useState(true);
   const [showTraffic, setShowTraffic] = useState(false);
+  // 3D references removed
 
   const inRouteVehicles = vehicles.filter(v => v.status === 'in_route' && v.currentPosition);
 
@@ -68,6 +70,98 @@ export function FleetMap() {
     }
   }, [show3D]);
 
+  // 3D custom layer removed
+
+  // Add 3D buildings layer on style load
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const map = mapRef.current.getMap();
+
+    const ensure3DBuildings = () => {
+      if (!map.getStyle()) return;
+      try {
+        map.setLight({ anchor: 'viewport', intensity: 0.6, color: 'white' } as any);
+        (map as any).setFog({ range: [0.6, 8], color: 'white', 'horizon-blend': 0.1 });
+      } catch (_) {}
+
+      // Add terrain for better 3D depth
+      try {
+        if (!map.getSource('mapbox-dem')) {
+          map.addSource('mapbox-dem', {
+            type: 'raster-dem',
+            url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+            tileSize: 512,
+            maxzoom: 14
+          } as any);
+        }
+        // setTerrain will overwrite if same source provided; guard by checking map.getTerrain
+        const terrain = (map as any).getTerrain && (map as any).getTerrain();
+        if (!terrain) {
+          (map as any).setTerrain({ source: 'mapbox-dem', exaggeration: 1.2 });
+        }
+      } catch (_) {}
+
+      // Add sky for atmosphere
+      try {
+        if (!map.getLayer('sky')) {
+          map.addLayer({
+            id: 'sky',
+            type: 'sky',
+            paint: {
+              'sky-type': 'atmosphere',
+              'sky-atmosphere-sun': [0.0, 0.0],
+              'sky-atmosphere-sun-intensity': 10
+            }
+          } as any);
+        }
+      } catch (_) {}
+
+      if (map.getLayer('3d-buildings')) return;
+      try {
+        const layers = map.getStyle().layers as any[];
+        const labelLayerId = layers.find((l: any) => l.type === 'symbol' && l.layout && l.layout['text-field'])?.id;
+        map.addLayer(
+          {
+            id: '3d-buildings',
+            source: 'composite',
+            'source-layer': 'building',
+            filter: ['any', ['==', ['get', 'extrude'], 'true'], ['has', 'height'], ['has', 'min_height']],
+            type: 'fill-extrusion',
+            minzoom: 12,
+            paint: {
+              'fill-extrusion-color': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                12, '#6b7280',
+                16, '#4b5563'
+              ],
+              'fill-extrusion-height': ['coalesce', ['get', 'height'], 20],
+              'fill-extrusion-base': ['coalesce', ['get', 'min_height'], 0],
+              'fill-extrusion-opacity': 0.9,
+              'fill-extrusion-vertical-gradient': true
+            }
+          },
+          labelLayerId
+        );
+      } catch (_) {
+        // ignore if style doesn't support buildings
+      }
+    };
+
+    const onLoad = () => ensure3DBuildings();
+    const onStyleData = () => ensure3DBuildings();
+
+    if (map.loaded()) ensure3DBuildings();
+    map.on('load', onLoad);
+    map.on('styledata', onStyleData);
+
+    return () => {
+      map.off('load', onLoad);
+      map.off('styledata', onStyleData);
+    };
+  }, []);
+
   useEffect(() => {
     if (mapRef.current) {
       const map = mapRef.current.getMap();
@@ -107,10 +201,10 @@ export function FleetMap() {
       <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
         <button
           onClick={() => setShow3D(!show3D)}
-          className={`p-3 rounded-lg shadow-lg backdrop-blur-sm border transition-all ${
+          className={`p-3 rounded-lg border transition-colors ${
             show3D
-              ? 'bg-gradient-arkus border-arkus-fuchsia text-white'
-              : 'bg-white/90 border-gray-300 text-gray-700 hover:bg-white'
+              ? 'bg-gray-200 border-gray-300 text-gray-800 shadow-inner'
+              : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm'
           }`}
           title={show3D ? 'Disable 3D View' : 'Enable 3D View'}
         >
@@ -118,10 +212,10 @@ export function FleetMap() {
         </button>
         <button
           onClick={() => setShowTraffic(!showTraffic)}
-          className={`p-3 rounded-lg shadow-lg backdrop-blur-sm border transition-all ${
+          className={`p-3 rounded-lg border transition-colors ${
             showTraffic
-              ? 'bg-gradient-arkus border-arkus-fuchsia text-white'
-              : 'bg-white/90 border-gray-300 text-gray-700 hover:bg-white'
+              ? 'bg-gray-200 border-gray-300 text-gray-800 shadow-inner'
+              : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm'
           }`}
           title={showTraffic ? 'Hide Traffic' : 'Show Traffic'}
         >
@@ -134,11 +228,14 @@ export function FleetMap() {
         initialViewState={{
           longitude: -117.1611,
           latitude: 32.7157,
-          zoom: 11
+          zoom: 13.5,
+          pitch: 60,
+          bearing: 30
         }}
         style={{ width: '100%', height: '100%' }}
         mapStyle="mapbox://styles/mapbox/light-v11"
         mapboxAccessToken={MAPBOX_TOKEN}
+        antialias={true}
       >
         <NavigationControl position="top-left" showCompass={true} visualizePitch={true} />
         {warehouses.map(warehouse => {
@@ -160,7 +257,7 @@ export function FleetMap() {
                 {isFocused && (
                   <div className="absolute inset-0 w-14 h-14 bg-arkus-blue rounded-full opacity-20 animate-pulse -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"></div>
                 )}
-                <div className={`relative w-10 h-10 bg-gradient-arkus rounded-full flex items-center justify-center text-white shadow-2xl border-2 ${isFocused ? 'border-arkus-fuchsia scale-125' : 'border-white'} transition-all`}>
+                <div className={`relative w-10 h-10 bg-arkus-blue rounded-full flex items-center justify-center text-white shadow-2xl border-2 ${isFocused ? 'border-arkus-blue scale-125' : 'border-white'} transition-all`}>
                   <Warehouse className="w-5 h-5" />
                 </div>
                 <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 whitespace-nowrap bg-white/95 backdrop-blur-sm text-gray-800 text-xs px-2 py-1 rounded shadow-lg border border-gray-200">
@@ -288,22 +385,23 @@ export function FleetMap() {
             anchor="bottom"
             offset={15}
           >
-            <div className="bg-gradient-to-b from-gray-900 to-gray-800 rounded-lg shadow-2xl border border-gray-700 p-3 min-w-[260px]">
-              <div className="flex items-center justify-between mb-2">
+            <div className="bg-white rounded-lg shadow-2xl border border-gray-200 min-w-[320px] text-gray-800">
+              <div className="bg-arkus-blue px-3 py-2 rounded-t-lg flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-6 h-6 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                  <div className="w-6 h-6 bg-white/25 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
                     {popupInfo.data.stopNumber}
                   </div>
                   <h3 className="font-bold text-sm text-white truncate" title={popupInfo.data.businessName}>{popupInfo.data.businessName}</h3>
                 </div>
                 <button
                   onClick={() => setPopupInfo(null)}
-                  className="p-1 hover:bg-gray-700 rounded transition-colors"
+                  className="p-1 hover:bg-white/20 rounded transition-colors"
                 >
-                  <X className="w-4 h-4 text-gray-400" />
+                  <X className="w-4 h-4 text-white" />
                 </button>
               </div>
-              <p className="text-xs text-gray-400 mb-2 truncate" title={popupInfo.data.address}>{popupInfo.data.address}</p>
+              <div className="p-3">
+                <p className="text-xs text-gray-700 mb-2 truncate" title={popupInfo.data.address}>{popupInfo.data.address}</p>
               {(() => {
                 const routeWithStop = savedRoutes.find(r =>
                   r.stops.some(s => s.id === popupInfo.data.id)
@@ -327,13 +425,13 @@ export function FleetMap() {
                       const etaToThisStop = Math.round(estimatedMinutesPerStop * (stopsUntilThis + 1));
 
                       return (
-                        <div className="pt-2 border-t border-gray-700">
+                        <div className="pt-2 border-t border-gray-200">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-green-900 text-green-300">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-blue-50 text-arkus-blue">
                               <Truck className="w-3 h-3" /> {vehicleOnRoute.alias}
                             </span>
-                            <span className="inline-block px-2 py-0.5 rounded text-xs bg-gray-800 text-gray-300">ETA ~{etaToThisStop} min</span>
-                            <span className="inline-block px-2 py-0.5 rounded text-xs bg-gray-800 text-gray-300">{stopsUntilThis} stops away</span>
+                            <span className="inline-block px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700">ETA ~{etaToThisStop} min</span>
+                            <span className="inline-block px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700">{stopsUntilThis} stops away</span>
                           </div>
                         </div>
                       );
@@ -341,8 +439,8 @@ export function FleetMap() {
 
                     if (isCompleted) {
                       return (
-                        <div className="pt-2 border-t border-gray-700">
-                          <span className="inline-block px-2 py-0.5 rounded text-xs bg-green-900 text-green-300">Completed</span>
+                        <div className="pt-2 border-t border-gray-200">
+                          <span className="inline-block px-2 py-0.5 rounded text-xs bg-blue-50 text-arkus-blue">Completed</span>
                         </div>
                       );
                     }
@@ -350,6 +448,7 @@ export function FleetMap() {
                 }
                 return null;
               })()}
+              </div>
             </div>
           </Popup>
         )}
@@ -364,20 +463,20 @@ export function FleetMap() {
             anchor="bottom"
             offset={15}
           >
-            <div className="bg-gradient-to-b from-gray-900 to-gray-800 rounded-lg shadow-2xl border border-gray-700 p-4 min-w-[320px]">
-              <div className="flex items-center justify-between mb-3">
+            <div className="bg-white rounded-lg shadow-2xl border border-gray-200 p-4 min-w-[340px] text-gray-800">
+              <div className="flex items-center justify-between mb-3 bg-arkus-blue -mx-4 -mt-4 px-4 py-2 rounded-t-lg">
                 <div className="flex items-center gap-2 min-w-0">
-                  <Truck className="w-5 h-5 text-blue-400" />
+                  <Truck className="w-5 h-5 text-white" />
                   <div>
-                    <h3 className="font-bold text-base text-white">{popupInfo.data.alias}</h3>
-                    <p className="text-xs text-gray-400 font-mono">{popupInfo.data.licensePlate}</p>
+                    <h3 className="font-bold text-base text-white truncate">{popupInfo.data.alias}</h3>
+                    <p className="text-[10px] text-white/80 font-mono truncate">{popupInfo.data.licensePlate}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setPopupInfo(null)}
-                  className="p-1 hover:bg-gray-700 rounded transition-colors"
+                  className="p-1 hover:bg-white/20 rounded transition-colors"
                 >
-                  <X className="w-4 h-4 text-gray-400" />
+                  <X className="w-4 h-4 text-white" />
                 </button>
               </div>
 
@@ -397,7 +496,7 @@ export function FleetMap() {
               })()}
 
               {popupInfo.data.telemetry && (
-                <div className="space-y-2 mb-3 p-3 bg-gray-950 rounded-lg border border-gray-700">
+                <div className="space-y-2 mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="text-xs font-semibold text-blue-400 mb-2 flex items-center gap-1.5">
                     <Zap className="w-3.5 h-3.5" />
                     TELEMETRY DATA
@@ -422,52 +521,52 @@ export function FleetMap() {
                         }`}>
                           {popupInfo.data.telemetry.batteryLevel}%
                         </div>
-                        <div className="text-xs text-gray-400">Battery</div>
+                        <div className="text-xs text-gray-500">Battery</div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Gauge className="w-4 h-4 text-blue-400" />
+                      <Gauge className="w-4 h-4 text-blue-500" />
                       <div>
-                        <div className="text-sm font-semibold text-white">{popupInfo.data.telemetry.speed} km/h</div>
-                        <div className="text-xs text-gray-400">Speed</div>
+                        <div className="text-sm font-semibold text-gray-900">{popupInfo.data.telemetry.speed} km/h</div>
+                        <div className="text-xs text-gray-500">Speed</div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <Zap className="w-4 h-4 text-yellow-400" />
                       <div>
-                        <div className="text-sm font-semibold text-white">{popupInfo.data.telemetry.range} km</div>
-                        <div className="text-xs text-gray-400">Range</div>
+                        <div className="text-sm font-semibold text-gray-900">{popupInfo.data.telemetry.range} km</div>
+                        <div className="text-xs text-gray-500">Range</div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <ThermometerSun className="w-4 h-4 text-orange-400" />
                       <div>
-                        <div className="text-sm font-semibold text-white">{popupInfo.data.telemetry.motorTemperature.toFixed(1)}°C</div>
-                        <div className="text-xs text-gray-400">Motor</div>
+                        <div className="text-sm font-semibold text-gray-900">{popupInfo.data.telemetry.motorTemperature.toFixed(1)}°C</div>
+                        <div className="text-xs text-gray-500">Motor</div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <Zap className="w-4 h-4 text-purple-400" />
                       <div>
-                        <div className="text-sm font-semibold text-white">{popupInfo.data.telemetry.powerConsumption.toFixed(1)} kW</div>
-                        <div className="text-xs text-gray-400">Power</div>
+                        <div className="text-sm font-semibold text-gray-900">{popupInfo.data.telemetry.powerConsumption.toFixed(1)} kW</div>
+                        <div className="text-xs text-gray-500">Power</div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <Radio className="w-4 h-4 text-green-400" />
                       <div>
-                        <div className="text-sm font-semibold text-white">{popupInfo.data.telemetry.signalStrength}%</div>
-                        <div className="text-xs text-gray-400">Signal</div>
+                        <div className="text-sm font-semibold text-gray-900">{popupInfo.data.telemetry.signalStrength}%</div>
+                        <div className="text-xs text-gray-500">Signal</div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-gray-700 space-y-1">
+                  <div className="pt-2 border-t border-gray-200 space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-gray-400">Autonomy Mode</span>
                       <span className="text-xs font-semibold text-blue-400 uppercase">{popupInfo.data.telemetry.autonomyMode}</span>
@@ -486,7 +585,7 @@ export function FleetMap() {
                           <MapPin className="w-3 h-3" />
                           GPS Position
                         </span>
-                        <span className="text-xs font-mono text-gray-300">
+                        <span className="text-xs font-mono text-gray-600">
                           {popupInfo.data.currentPosition.lat.toFixed(4)}, {popupInfo.data.currentPosition.lng.toFixed(4)}
                         </span>
                       </div>
