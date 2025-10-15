@@ -56,27 +56,27 @@ export function IntroModal({ onClose }: IntroModalProps) {
   const Icon = currentStepData.icon;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="relative w-full max-w-2xl mx-4 bg-gradient-to-b from-gray-900 to-gray-800 border border-gray-700 rounded-2xl shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="relative w-full max-w-2xl mx-4 bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-all z-10"
+          className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all z-10"
         >
           <X className="w-5 h-5" />
         </button>
 
         <div className="p-8">
           <div className="flex items-center justify-center mb-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <div className="w-20 h-20 bg-gradient-arkus rounded-2xl flex items-center justify-center shadow-lg">
               <Icon className="w-10 h-10 text-white" />
             </div>
           </div>
 
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-white mb-3">
+            <h2 className="text-3xl font-bold bg-gradient-arkus bg-clip-text text-transparent mb-3">
               {currentStepData.title}
             </h2>
-            <p className="text-lg text-gray-300 leading-relaxed">
+            <p className="text-lg text-gray-700 leading-relaxed">
               {currentStepData.description}
             </p>
           </div>
@@ -88,8 +88,8 @@ export function IntroModal({ onClose }: IntroModalProps) {
                 onClick={() => setCurrentStep(index)}
                 className={`h-2 rounded-full transition-all ${
                   index === currentStep
-                    ? 'w-8 bg-blue-500'
-                    : 'w-2 bg-gray-600 hover:bg-gray-500'
+                    ? 'w-8 bg-gradient-arkus'
+                    : 'w-2 bg-gray-300 hover:bg-gray-400'
                 }`}
               />
             ))}
@@ -99,23 +99,23 @@ export function IntroModal({ onClose }: IntroModalProps) {
             <button
               onClick={handlePrev}
               disabled={currentStep === 0}
-              className="px-6 py-3 bg-gray-800 text-gray-300 rounded-xl hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all font-medium"
+              className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all font-medium"
             >
               Previous
             </button>
 
             <button
               onClick={handleNext}
-              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl hover:from-blue-700 hover:to-blue-600 transition-all font-medium shadow-lg"
+              className="px-8 py-3 bg-gradient-arkus text-white rounded-xl hover:shadow-xl transition-all font-medium shadow-lg"
             >
               {currentStep === steps.length - 1 ? 'Get Started' : 'Next'}
             </button>
           </div>
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-800">
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200">
           <div
-            className="h-full bg-gradient-to-r from-blue-600 to-blue-500 transition-all duration-300"
+            className="h-full bg-gradient-arkus transition-all duration-300"
             style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
           />
         </div>

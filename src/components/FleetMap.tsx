@@ -109,8 +109,8 @@ export function FleetMap() {
           onClick={() => setShow3D(!show3D)}
           className={`p-3 rounded-lg shadow-lg backdrop-blur-sm border transition-all ${
             show3D
-              ? 'bg-blue-600 border-blue-400 text-white'
-              : 'bg-gray-900/80 border-gray-700 text-gray-300 hover:bg-gray-800'
+              ? 'bg-gradient-arkus border-arkus-fuchsia text-white'
+              : 'bg-white/90 border-gray-300 text-gray-700 hover:bg-white'
           }`}
           title={show3D ? 'Disable 3D View' : 'Enable 3D View'}
         >
@@ -120,8 +120,8 @@ export function FleetMap() {
           onClick={() => setShowTraffic(!showTraffic)}
           className={`p-3 rounded-lg shadow-lg backdrop-blur-sm border transition-all ${
             showTraffic
-              ? 'bg-blue-600 border-blue-400 text-white'
-              : 'bg-gray-900/80 border-gray-700 text-gray-300 hover:bg-gray-800'
+              ? 'bg-gradient-arkus border-arkus-fuchsia text-white'
+              : 'bg-white/90 border-gray-300 text-gray-700 hover:bg-white'
           }`}
           title={showTraffic ? 'Hide Traffic' : 'Show Traffic'}
         >
@@ -137,7 +137,7 @@ export function FleetMap() {
           zoom: 11
         }}
         style={{ width: '100%', height: '100%' }}
-        mapStyle="mapbox://styles/mapbox/dark-v11"
+        mapStyle="mapbox://styles/mapbox/light-v11"
         mapboxAccessToken={MAPBOX_TOKEN}
       >
         <NavigationControl position="top-left" showCompass={true} visualizePitch={true} />
@@ -158,12 +158,12 @@ export function FleetMap() {
                 }}
               >
                 {isFocused && (
-                  <div className="absolute inset-0 w-14 h-14 bg-blue-500 rounded-full opacity-20 animate-pulse -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"></div>
+                  <div className="absolute inset-0 w-14 h-14 bg-arkus-blue rounded-full opacity-20 animate-pulse -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"></div>
                 )}
-                <div className={`relative w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white shadow-2xl border-2 ${isFocused ? 'border-blue-400 scale-125' : 'border-white'} transition-all`}>
+                <div className={`relative w-10 h-10 bg-gradient-arkus rounded-full flex items-center justify-center text-white shadow-2xl border-2 ${isFocused ? 'border-arkus-fuchsia scale-125' : 'border-white'} transition-all`}>
                   <Warehouse className="w-5 h-5" />
                 </div>
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 whitespace-nowrap bg-gray-900/90 text-white text-xs px-2 py-1 rounded shadow-lg border border-gray-700">
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 whitespace-nowrap bg-white/95 backdrop-blur-sm text-gray-800 text-xs px-2 py-1 rounded shadow-lg border border-gray-200">
                   {warehouse.name}
                 </div>
               </div>
@@ -230,9 +230,9 @@ export function FleetMap() {
 
         {inRouteVehicles.map(vehicle => {
           const statusColors: Record<string, string> = {
-            in_route: 'from-green-500 to-green-600',
+            in_route: 'from-green-500 to-emerald-600',
             idle: 'from-gray-400 to-gray-500',
-            available: 'from-blue-500 to-blue-600',
+            available: 'from-arkus-blue to-blue-600',
             maintenance: 'from-orange-500 to-orange-600'
           };
 

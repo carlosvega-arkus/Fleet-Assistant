@@ -71,22 +71,22 @@ function App() {
 
   return (
     <FleetProvider navigateToChat={navigateToChat}>
-      <div className="h-screen w-screen flex flex-col overflow-hidden bg-gray-900">
-        <header className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border-b border-gray-700 z-20 flex-shrink-0 shadow-2xl">
+      <div className="h-screen w-screen flex flex-col overflow-hidden bg-gradient-to-br from-gray-50 via-purple-50/30 to-blue-50/40">
+        <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 z-20 flex-shrink-0 shadow-lg">
           <div className="px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 bg-gradient-arkus rounded-lg flex items-center justify-center shadow-lg">
                 <Truck className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">Autonomous Fleet Control</h1>
-                <p className="text-xs text-gray-400">AI-Powered Electric Vehicle Management</p>
+                <h1 className="text-xl font-bold bg-gradient-arkus bg-clip-text text-transparent">Autonomous Fleet Control</h1>
+                <p className="text-xs text-gray-600">AI-Powered Electric Vehicle Management</p>
               </div>
             </div>
 
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="lg:hidden p-2 hover:bg-gray-700 rounded-lg transition-colors text-white"
+              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-800"
             >
               {showMobileMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -100,8 +100,8 @@ function App() {
                     onClick={() => setActivePanel(activePanel === key ? null : key as Panel)}
                     className={`px-5 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center gap-2 ${
                       activePanel === key
-                        ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg scale-105'
-                        : 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white'
+                        ? 'bg-gradient-arkus text-white shadow-lg scale-105'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -113,7 +113,7 @@ function App() {
           </div>
 
           {showMobileMenu && (
-            <div className="lg:hidden border-t border-gray-700 px-4 py-3 space-y-2">
+            <div className="lg:hidden border-t border-gray-200 px-4 py-3 space-y-2">
               {Object.entries(panels).map(([key, panel]) => {
                 const Icon = panel.icon;
                 return (
@@ -125,8 +125,8 @@ function App() {
                     }}
                     className={`w-full px-4 py-3 rounded-lg font-medium text-sm transition-all flex items-center gap-3 ${
                       activePanel === key
-                        ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white'
-                        : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                        ? 'bg-gradient-arkus text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
                     <Icon className="w-5 h-5" />
@@ -145,15 +145,15 @@ function App() {
 
           {activePanel && ActivePanelComponent && (
             <aside
-              className="hidden lg:block bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl overflow-y-auto border-l border-gray-700 flex-shrink-0 relative"
+              className="hidden lg:block bg-white/95 backdrop-blur-sm shadow-2xl overflow-y-auto border-l border-gray-200 flex-shrink-0 relative"
               style={{ width: `${panelWidth}px` }}
             >
               <div
                 ref={resizeRef}
                 onMouseDown={handleMouseDown}
-                className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-blue-500 transition-colors z-50 group"
+                className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-arkus-fuchsia transition-colors z-50 group"
               >
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-arkus-fuchsia opacity-0 group-hover:opacity-100 transition-opacity"></div>
               </div>
               <div className={activePanel === 'chat' ? 'h-full' : 'p-6'}>
                 <ActivePanelComponent />
@@ -162,7 +162,7 @@ function App() {
           )}
 
           {activePanel && ActivePanelComponent && (
-            <div className="lg:hidden fixed inset-x-0 bottom-0 bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl z-40 rounded-t-3xl max-h-[75vh] overflow-y-auto">
+            <div className="lg:hidden fixed inset-x-0 bottom-0 bg-white/95 backdrop-blur-sm shadow-2xl z-40 rounded-t-3xl max-h-[75vh] overflow-y-auto">
               <div className={activePanel === 'chat' ? 'h-full' : 'p-4'}>
                 <ActivePanelComponent />
               </div>
