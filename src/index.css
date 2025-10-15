@@ -27,8 +27,12 @@
   }
 
   .btn-gradient-arkus {
-    background: linear-gradient(90deg, #F70D3F 0%, #EC10A9 50%, #0055FF 100%) !important;
-    color: white !important;
+    background: white !important;
+    border: 2px solid transparent !important;
+    background-image: linear-gradient(white, white), linear-gradient(90deg, #F70D3F 0%, #EC10A9 50%, #0055FF 100%) !important;
+    background-origin: border-box !important;
+    background-clip: padding-box, border-box !important;
+    color: #181818 !important;
   }
 
   .bg-gradient-arkus-solid {
