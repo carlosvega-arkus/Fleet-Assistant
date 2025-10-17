@@ -506,7 +506,7 @@ export function FleetMap({ introOpen }: { introOpen?: boolean }) {
             closeButton={false}
             closeOnClick={false}
             anchor="bottom"
-            offset={15}
+            offset={28}
           >
             <div className="bg-white rounded-lg shadow-2xl border border-gray-200 p-4 min-w-[340px] text-gray-800">
               <div className="flex items-center justify-between mb-3 bg-arkus-blue -mx-4 -mt-4 px-4 py-2 rounded-t-lg">
