@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import Map, { Marker, Source, Layer, Popup, NavigationControl } from 'react-map-gl';
 import mapboxgl from 'mapbox-gl';
 import { useFleet } from '../context/FleetContext';
-import { Warehouse, Truck, X, Box, Eye, Battery, Zap, Gauge, ThermometerSun, Radio, MapPin } from 'lucide-react';
+import { Warehouse, Truck, X, Box, Eye, Battery, Zap, Gauge, ThermometerSun, Radio, MapPin, AlertTriangle, Route as RouteIcon } from 'lucide-react';
 import { WarehouseInfoPopup } from './WarehouseInfoPopup';
 import 'mapbox-gl/dist/mapbox-gl.css';
 // 3D overlays removed
@@ -10,7 +10,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 export function FleetMap({ introOpen }: { introOpen?: boolean }) {
-  const { warehouses, vehicles, savedRoutes, visibleRouteIds, focusedRouteId, focusedWarehouseId, focusedVehicleId, setFocusedVehicle, setFocusedWarehouse, setFocusedRoute, toggleRouteVisibility } = useFleet();
+  const { warehouses, vehicles, savedRoutes, visibleRouteIds, focusedRouteId, focusedWarehouseId, focusedVehicleId, setFocusedVehicle, setFocusedWarehouse, setFocusedRoute, toggleRouteVisibility, routeTraffic, trafficFocusRequest, clearTrafficFocus, pendingDetours, simulatedTrafficRouteId, trafficPopupCloseRequest, clearTrafficPopupClose } = useFleet();
   const mapRef = useRef<any>(null);
   const [popupInfo, setPopupInfo] = useState<any>(null);
   const [show3D, setShow3D] = useState(true);
@@ -18,6 +18,7 @@ export function FleetMap({ introOpen }: { introOpen?: boolean }) {
   const [hoveredVehicleId, setHoveredVehicleId] = useState<string | null>(null);
   const [hoveredStopId, setHoveredStopId] = useState<string | null>(null);
   const initializedRef = useRef(false);
+  const [trafficPopup, setTrafficPopup] = useState<{ routeId: string } | null>(null);
   // 3D references removed
 
   const inRouteVehicles = vehicles.filter(v => v.status === 'in_route' && v.currentPosition);
@@ -220,6 +221,37 @@ export function FleetMap({ introOpen }: { introOpen?: boolean }) {
     }
   }, [showTraffic]);
 
+  useEffect(() => {
+    if (!trafficFocusRequest) return;
+    const t = routeTraffic[trafficFocusRequest];
+    if (t && t.coordinates && mapRef.current) {
+      const map = mapRef.current.getMap();
+      map.easeTo({ center: [t.coordinates.lng, t.coordinates.lat], duration: 800, zoom: Math.max(map.getZoom(), 13) });
+      setTrafficPopup({ routeId: trafficFocusRequest });
+    }
+    clearTrafficFocus();
+  }, [trafficFocusRequest, routeTraffic, clearTrafficFocus]);
+
+  useEffect(() => {
+    if (trafficPopupCloseRequest && trafficPopupCloseRequest === trafficPopup?.routeId) {
+      setTrafficPopup(null);
+      clearTrafficPopupClose();
+    }
+  }, [trafficPopupCloseRequest, trafficPopup, clearTrafficPopupClose]);
+
+  // Close traffic popup on Esc
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setTrafficPopup(null);
+      }
+    };
+    if (trafficPopup) {
+      window.addEventListener('keydown', onKeyDown);
+    }
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [trafficPopup]);
+
   return (
     <div className="relative w-full h-full">
       <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
@@ -400,6 +432,113 @@ export function FleetMap({ introOpen }: { introOpen?: boolean }) {
             </Marker>
           );
         })}
+
+        {/* Traffic alerts markers */}
+        {Object.values(routeTraffic).map(t => {
+          if (simulatedTrafficRouteId && t.routeId !== simulatedTrafficRouteId) return null;
+          if (t.status === 'normal') return null;
+          if (!t.coordinates) return null;
+          const color = t.status === 'closed' ? 'bg-red-600' : 'bg-yellow-500';
+          return (
+            <Marker key={`traffic-${t.routeId}`} longitude={t.coordinates.lng} latitude={t.coordinates.lat} anchor="bottom">
+              <div className="flex flex-col items-center">
+                <button
+                  onClick={() => setTrafficPopup({ routeId: t.routeId })}
+                  className={`w-7 h-7 ${color} rounded-full border-2 border-white shadow-lg flex items-center justify-center hover:scale-105 transition-transform`}
+                  aria-label="Traffic alert"
+                >
+                  <AlertTriangle className="w-4 h-4 text-white" />
+                </button>
+                <div className="mt-1 text-[10px] font-medium text-gray-700 bg-white/90 rounded px-1.5 py-0.5 border border-gray-200 shadow">{t.status.toUpperCase()}</div>
+              </div>
+            </Marker>
+          );
+        })}
+
+        {/* Pending detour overlays (light gray) */}
+        {Object.entries(pendingDetours).map(([routeId, geom]) => (
+          <Source key={`pending-${routeId}`} id={`pending-${routeId}`} type="geojson" data={{
+            type: 'Feature',
+            geometry: { type: 'LineString', coordinates: geom.map(p => [p.lng, p.lat]) }
+          }}>
+            <Layer id={`pending-line-${routeId}`} type="line" paint={{ 'line-color': '#CBD5E1', 'line-width': 4, 'line-dasharray': [1, 1] }} />
+          </Source>
+        ))}
+
+        {trafficPopup && routeTraffic[trafficPopup.routeId] && (!simulatedTrafficRouteId || trafficPopup.routeId === simulatedTrafficRouteId) && routeTraffic[trafficPopup.routeId].coordinates && (
+          <Popup
+            longitude={routeTraffic[trafficPopup.routeId].coordinates.lng}
+            latitude={routeTraffic[trafficPopup.routeId].coordinates.lat}
+            onClose={() => setTrafficPopup(null)}
+            closeButton={true}
+            closeOnClick={true}
+            anchor="top"
+            offset={12}
+          >
+            <div className="bg-white rounded-lg shadow-2xl border border-gray-200 p-3 min-w-[260px] text-gray-800">
+              <div className={`-mx-3 -mt-3 px-3 py-2 rounded-t-lg ${routeTraffic[trafficPopup.routeId].status === 'closed' ? 'bg-red-600' : 'bg-yellow-500'} text-white font-semibold flex items-center justify-between`}>
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" />
+                  Traffic Alert
+                </div>
+                <button onClick={() => setTrafficPopup(null)} className="p-1 hover:bg-white/20 rounded transition-colors" aria-label="Close alert">
+                  <X className="w-4 h-4 text-white" />
+                </button>
+              </div>
+              {(() => {
+                const t = routeTraffic[trafficPopup.routeId];
+                const route = savedRoutes.find(r => r.id === t.routeId);
+                // find nearest stop to the alert point
+                let nearestStopText = '';
+                if (route && route.stops && route.stops.length > 0) {
+                  const alertPos = t.coordinates;
+                  let bestIdx = 0;
+                  let bestDist = Infinity;
+                  route.stops.forEach((s, idx) => {
+                    const dLat = s.coordinates.lat - alertPos.lat;
+                    const dLng = s.coordinates.lng - alertPos.lng;
+                    const d2 = dLat * dLat + dLng * dLng;
+                    if (d2 < bestDist) { bestDist = d2; bestIdx = idx; }
+                  });
+                  const s = route.stops[bestIdx];
+                  nearestStopText = `Near Stop #${s.stopNumber} — ${s.businessName}${s.address ? ` (${s.address})` : ''}`;
+                }
+                // alternative suggestion: try to find a sibling route with same destination
+                let suggestion = '';
+                if (route) {
+                  const alt = savedRoutes.find(r => r.id !== route.id && r.destinationWarehouseId === route.destinationWarehouseId);
+                  if (alt) {
+                    suggestion = `Suggestion: Consider switching to ${alt.id.toUpperCase()} (${alt.name}) if timing allows.`;
+                  } else if (route.stops.length > 1) {
+                    const sIdx = nearestStopText ? Math.max(1, Math.min(route.stops.length - 1, route.stops.findIndex(x => nearestStopText.includes(x.businessName)))) : 1;
+                    suggestion = `Suggestion: Detour between stops #${sIdx} and #${sIdx + 1} using arterial roads to bypass the affected segment.`;
+                  } else {
+                    suggestion = `Suggestion: Take major arterials around the affected area and rejoin the route after the blockage.`;
+                  }
+                }
+                return (
+                  <div className="space-y-1.5 mt-2">
+                    <div className="text-sm font-semibold text-gray-900">{route ? `${route.id.toUpperCase()} — ${route.name}` : t.routeId.toUpperCase()}</div>
+                    <div className="text-xs text-gray-700">Status: <span className="font-medium">{t.status.toUpperCase()}</span>{t.delayMinutes ? ` (+${t.delayMinutes} min)` : ''}</div>
+                    {t.reason && <div className="text-xs text-gray-700">Reason: {t.reason}</div>}
+                    {nearestStopText && <div className="text-xs text-gray-700">Location: {nearestStopText}</div>}
+                    <div className="text-xs text-gray-700">Impact: {t.status === 'closed' ? 'Segment closed; detour required.' : 'Heavy congestion; slower speeds expected.'}</div>
+                    {suggestion && (
+                      <div className="mt-2 border border-blue-200 bg-blue-50 rounded p-2.5">
+                        <div className="flex items-center gap-1.5 text-blue-700 text-xs font-semibold">
+                          <RouteIcon className="w-3.5 h-3.5" />
+                          Alternative route
+                        </div>
+                        <div className="text-xs text-blue-700 mt-1">{suggestion}</div>
+                      </div>
+                    )}
+                    <div className="text-xs text-gray-500">Updated: {new Date(t.updatedAt).toLocaleTimeString()}</div>
+                  </div>
+                );
+              })()}
+            </div>
+          </Popup>
+        )}
 
         {popupInfo && popupInfo.type === 'warehouse' && (
           <Popup

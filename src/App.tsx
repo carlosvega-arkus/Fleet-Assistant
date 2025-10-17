@@ -70,7 +70,7 @@ function App() {
   };
 
   return (
-    <FleetProvider navigateToChat={navigateToChat}>
+    <FleetProvider navigateToChat={navigateToChat} introOpen={showIntro}>
       <div className="h-screen w-screen flex flex-col overflow-hidden bg-gradient-to-br from-gray-50 via-purple-50/30 to-blue-50/40">
         <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 z-20 flex-shrink-0 shadow-lg">
           <div className="px-6 py-4 flex items-center justify-between">
