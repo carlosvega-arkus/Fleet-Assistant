@@ -9,14 +9,15 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
-export function FleetMap() {
-  const { warehouses, vehicles, savedRoutes, visibleRouteIds, focusedRouteId, focusedWarehouseId, focusedVehicleId, setFocusedVehicle, setFocusedWarehouse } = useFleet();
+export function FleetMap({ introOpen }: { introOpen?: boolean }) {
+  const { warehouses, vehicles, savedRoutes, visibleRouteIds, focusedRouteId, focusedWarehouseId, focusedVehicleId, setFocusedVehicle, setFocusedWarehouse, setFocusedRoute, toggleRouteVisibility } = useFleet();
   const mapRef = useRef<any>(null);
   const [popupInfo, setPopupInfo] = useState<any>(null);
   const [show3D, setShow3D] = useState(true);
   const [showTraffic, setShowTraffic] = useState(false);
   const [hoveredVehicleId, setHoveredVehicleId] = useState<string | null>(null);
   const [hoveredStopId, setHoveredStopId] = useState<string | null>(null);
+  const initializedRef = useRef(false);
   // 3D references removed
 
   const inRouteVehicles = vehicles.filter(v => v.status === 'in_route' && v.currentPosition);
@@ -71,6 +72,27 @@ export function FleetMap() {
       }
     }
   }, [show3D]);
+
+  // DEMO: after walkthrough closes, focus RT-001 and open its vehicle popup
+  useEffect(() => {
+    if (initializedRef.current) return;
+    if (introOpen !== false) return; // wait until walkthrough modal is closed
+    const targetRouteId = 'rt-001';
+    const routeExists = savedRoutes.some(r => r.id === targetRouteId);
+    if (!routeExists) return;
+
+    if (!visibleRouteIds.has(targetRouteId)) {
+      toggleRouteVisibility(targetRouteId);
+    }
+    setFocusedRoute(targetRouteId);
+
+    const vehOnRoute = vehicles.find(v => v.status === 'in_route' && v.currentRouteId === targetRouteId && v.currentPosition);
+    if (vehOnRoute) {
+      setFocusedVehicle(vehOnRoute.id);
+      setPopupInfo({ type: 'vehicle', data: vehOnRoute });
+    }
+    initializedRef.current = true;
+  }, [introOpen, vehicles, savedRoutes, visibleRouteIds, toggleRouteVisibility, setFocusedRoute, setFocusedVehicle]);
 
   // 3D custom layer removed
 
@@ -354,7 +376,7 @@ export function FleetMap() {
               <div
                 className="relative group cursor-pointer"
                 onClick={() => {
-                  setPopupInfo({ type: 'vehicle', data: vehicle });
+                  setPopupInfo({ type: 'vehicle', vehicleId: vehicle.id });
                   setFocusedVehicle(vehicle.id);
                 }}
                 onMouseEnter={() => setHoveredVehicleId(vehicle.id)}
@@ -478,21 +500,21 @@ export function FleetMap() {
 
         {popupInfo && popupInfo.type === 'vehicle' && (
           <Popup
-            longitude={popupInfo.data.currentPosition.lng}
-            latitude={popupInfo.data.currentPosition.lat}
+            longitude={(vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id))?.currentPosition || popupInfo.data?.currentPosition)?.lng}
+            latitude={(vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id))?.currentPosition || popupInfo.data?.currentPosition)?.lat}
             onClose={() => setPopupInfo(null)}
             closeButton={false}
             closeOnClick={false}
             anchor="bottom"
-            offset={15}
+            offset={28}
           >
             <div className="bg-white rounded-lg shadow-2xl border border-gray-200 p-4 min-w-[340px] text-gray-800">
               <div className="flex items-center justify-between mb-3 bg-arkus-blue -mx-4 -mt-4 px-4 py-2 rounded-t-lg">
                 <div className="flex items-center gap-2 min-w-0">
                   <Truck className="w-5 h-5 text-white" />
                   <div>
-                    <h3 className="font-bold text-base text-white truncate">{popupInfo.data.alias}</h3>
-                    <p className="text-[10px] text-white/80 font-mono truncate">{popupInfo.data.licensePlate}</p>
+                    <h3 className="font-bold text-base text-white truncate">{(vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id)) || popupInfo.data)?.alias}</h3>
+                    <p className="text-[10px] text-white/80 font-mono truncate">{(vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id)) || popupInfo.data)?.licensePlate}</p>
                   </div>
                 </div>
                 <button
@@ -504,21 +526,22 @@ export function FleetMap() {
               </div>
 
               {(() => {
-                const status = popupInfo.data.status as string;
+                const veh = vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id)) || popupInfo.data;
+                const status = (veh?.status || 'idle') as string;
                 const statusClass = status === 'in_route'
-                  ? 'bg-green-900 text-green-300 border-green-700'
+                  ? 'bg-blue-50 text-blue-600 border-blue-200'
                   : status === 'available'
-                  ? 'bg-blue-900 text-blue-300 border-blue-700'
+                  ? 'bg-green-50 text-green-600 border-green-200'
                   : status === 'maintenance'
-                  ? 'bg-orange-900 text-orange-300 border-orange-700'
-                  : 'bg-gray-800 text-gray-300 border-gray-600';
+                  ? 'bg-yellow-50 text-yellow-600 border-yellow-200'
+                  : 'bg-gray-100 text-gray-700 border-gray-200';
                 const label = status === 'in_route' ? 'In Route' : status.charAt(0).toUpperCase() + status.slice(1);
                 return (
-                  <div className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${statusClass} mb-3 text-center`}>{label}</div>
+                  <div className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${statusClass} mb-3 inline-block`}>{label}</div>
                 );
               })()}
 
-              {popupInfo.data.telemetry && (
+              {(vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id)) || popupInfo.data)?.telemetry && (
                 <div className="space-y-2 mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="text-xs font-semibold text-blue-400 mb-2 flex items-center gap-1.5">
                     <Zap className="w-3.5 h-3.5" />
@@ -528,21 +551,21 @@ export function FleetMap() {
                   <div className="grid grid-cols-2 gap-2">
                     <div className="flex items-center gap-2">
                       <Battery className={`w-4 h-4 ${
-                        popupInfo.data.telemetry.batteryLevel > 50
+                        ((vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id)) || popupInfo.data)?.telemetry.batteryLevel > 50)
                           ? 'text-green-400'
-                          : popupInfo.data.telemetry.batteryLevel > 20
+                          : ((vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id)) || popupInfo.data)?.telemetry.batteryLevel > 20)
                           ? 'text-yellow-400'
                           : 'text-red-400'
                       }`} />
                       <div>
                         <div className={`text-sm font-semibold ${
-                          popupInfo.data.telemetry.batteryLevel > 50
+                          ((vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id)) || popupInfo.data)?.telemetry.batteryLevel > 50)
                             ? 'text-green-400'
-                            : popupInfo.data.telemetry.batteryLevel > 20
+                            : ((vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id)) || popupInfo.data)?.telemetry.batteryLevel > 20)
                             ? 'text-yellow-400'
                             : 'text-red-400'
                         }`}>
-                          {popupInfo.data.telemetry.batteryLevel}%
+                          {(vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id)) || popupInfo.data)?.telemetry.batteryLevel}%
                         </div>
                         <div className="text-xs text-gray-500">Battery</div>
                       </div>
@@ -551,7 +574,7 @@ export function FleetMap() {
                     <div className="flex items-center gap-2">
                       <Gauge className="w-4 h-4 text-blue-500" />
                       <div>
-                        <div className="text-sm font-semibold text-gray-900">{popupInfo.data.telemetry.speed} km/h</div>
+                        <div className="text-sm font-semibold text-gray-900">{(vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id)) || popupInfo.data)?.telemetry.speed} km/h</div>
                         <div className="text-xs text-gray-500">Speed</div>
                       </div>
                     </div>
@@ -559,7 +582,7 @@ export function FleetMap() {
                     <div className="flex items-center gap-2">
                       <Zap className="w-4 h-4 text-yellow-400" />
                       <div>
-                        <div className="text-sm font-semibold text-gray-900">{popupInfo.data.telemetry.range} km</div>
+                        <div className="text-sm font-semibold text-gray-900">{(vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id)) || popupInfo.data)?.telemetry.range} km</div>
                         <div className="text-xs text-gray-500">Range</div>
                       </div>
                     </div>
@@ -567,7 +590,7 @@ export function FleetMap() {
                     <div className="flex items-center gap-2">
                       <ThermometerSun className="w-4 h-4 text-orange-400" />
                       <div>
-                        <div className="text-sm font-semibold text-gray-900">{popupInfo.data.telemetry.motorTemperature.toFixed(1)}°C</div>
+                        <div className="text-sm font-semibold text-gray-900">{((vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id)) || popupInfo.data)?.telemetry.motorTemperature as number).toFixed(1)}°C</div>
                         <div className="text-xs text-gray-500">Motor</div>
                       </div>
                     </div>
@@ -575,7 +598,7 @@ export function FleetMap() {
                     <div className="flex items-center gap-2">
                       <Zap className="w-4 h-4 text-purple-400" />
                       <div>
-                        <div className="text-sm font-semibold text-gray-900">{popupInfo.data.telemetry.powerConsumption.toFixed(1)} kW</div>
+                        <div className="text-sm font-semibold text-gray-900">{((vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id)) || popupInfo.data)?.telemetry.powerConsumption as number).toFixed(1)} kW</div>
                         <div className="text-xs text-gray-500">Power</div>
                       </div>
                     </div>
@@ -583,7 +606,7 @@ export function FleetMap() {
                     <div className="flex items-center gap-2">
                       <Radio className="w-4 h-4 text-green-400" />
                       <div>
-                        <div className="text-sm font-semibold text-gray-900">{popupInfo.data.telemetry.signalStrength}%</div>
+                        <div className="text-sm font-semibold text-gray-900">{(vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id)) || popupInfo.data)?.telemetry.signalStrength}%</div>
                         <div className="text-xs text-gray-500">Signal</div>
                       </div>
                     </div>
@@ -592,24 +615,24 @@ export function FleetMap() {
                   <div className="pt-2 border-t border-gray-200 space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-gray-400">Autonomy Mode</span>
-                      <span className="text-xs font-semibold text-blue-400 uppercase">{popupInfo.data.telemetry.autonomyMode}</span>
+                      <span className="text-xs font-semibold text-blue-400 uppercase">{(vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id)) || popupInfo.data)?.telemetry.autonomyMode}</span>
                     </div>
 
-                    {popupInfo.data.telemetry.obstaclesDetected > 0 && (
+                    {(vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id)) || popupInfo.data)?.telemetry.obstaclesDetected > 0 && (
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-400">Obstacles Detected</span>
-                        <span className="text-xs font-semibold text-orange-400">{popupInfo.data.telemetry.obstaclesDetected}</span>
+                        <span className="text-xs font-semibold text-orange-400">{(vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id)) || popupInfo.data)?.telemetry.obstaclesDetected}</span>
                       </div>
                     )}
 
-                    {popupInfo.data.currentPosition && (
+                    {(vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id)) || popupInfo.data)?.currentPosition && (
                       <div className="flex items-center justify-between pt-1">
                         <span className="text-xs text-gray-400 flex items-center gap-1">
                           <MapPin className="w-3 h-3" />
                           GPS Position
                         </span>
                         <span className="text-xs font-mono text-gray-600">
-                          {popupInfo.data.currentPosition.lat.toFixed(4)}, {popupInfo.data.currentPosition.lng.toFixed(4)}
+                          {((vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id)) || popupInfo.data)?.currentPosition.lat as number).toFixed(4)}, {((vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id)) || popupInfo.data)?.currentPosition.lng as number).toFixed(4)}
                         </span>
                       </div>
                     )}
@@ -618,29 +641,30 @@ export function FleetMap() {
               )}
 
               {(() => {
-                const route = savedRoutes.find(r => r.id === popupInfo.data.currentRouteId);
+                const veh = vehicles.find(v => v.id === (popupInfo.vehicleId || popupInfo.data?.id)) || popupInfo.data;
+                const route = savedRoutes.find(r => r.id === veh?.currentRouteId);
                 if (route) {
                   const originWarehouse = warehouses.find(w => w.id === route.originWarehouseId);
                   const destWarehouse = warehouses.find(w => w.id === route.destinationWarehouseId);
                   return (
                     <div className="space-y-2">
-                      <p className="text-xs text-blue-400 font-semibold">
+                      <p className="text-xs text-blue-600 font-semibold">
                         {route.name}
                       </p>
                       {originWarehouse && destWarehouse && (
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-gray-600">
                           {originWarehouse.name} → {destWarehouse.name}
                         </p>
                       )}
                       <div className="flex items-center gap-2 flex-wrap pt-1">
-                        {popupInfo.data.eta && (
-                          <span className="inline-block px-2 py-1 rounded text-xs bg-green-900 text-green-300 font-medium">ETA {popupInfo.data.eta} min</span>
+                        {veh?.eta && (
+                          <span className="inline-block px-2 py-1 rounded text-xs bg-blue-50 text-arkus-blue font-medium">ETA {veh.eta} min</span>
                         )}
-                        {popupInfo.data.stopsRemaining !== undefined && (
-                          <span className="inline-block px-2 py-1 rounded text-xs bg-gray-800 text-gray-300">{popupInfo.data.stopsRemaining} stops left</span>
+                        {veh?.stopsRemaining !== undefined && (
+                          <span className="inline-block px-2 py-1 rounded text-xs bg-gray-100 text-gray-700">{veh.stopsRemaining} stops left</span>
                         )}
-                        {popupInfo.data.routeProgress !== undefined && (
-                          <span className="inline-block px-2 py-1 rounded text-xs bg-gray-800 text-gray-300">{Math.round((popupInfo.data.routeProgress || 0) * 100)}%</span>
+                        {veh?.routeProgress !== undefined && (
+                          <span className="inline-block px-2 py-1 rounded text-xs bg-gray-100 text-gray-700">{Math.round((veh.routeProgress || 0) * 100)}%</span>
                         )}
                       </div>
                     </div>

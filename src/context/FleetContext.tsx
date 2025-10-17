@@ -32,11 +32,32 @@ export function FleetProvider({ children, navigateToChat }: { children: ReactNod
   const [focusedRouteId, setFocusedRouteId] = useState<string | null>(null);
   const [focusedWarehouseId, setFocusedWarehouseId] = useState<string | null>(null);
   const [focusedVehicleId, setFocusedVehicleId] = useState<string | null>(null);
+  // Seed chat with a demo interaction about U-67
+  const demoVehicle = initialVehicles.find(v => v.alias === 'U-67');
+  const demoRoute = demoVehicle?.currentRouteId ? mockSavedRoutes.find(r => r.id === demoVehicle.currentRouteId) : undefined;
+  const demoOrigin = demoRoute ? mockWarehouses.find(w => w.id === demoRoute.originWarehouseId) : undefined;
+  const demoDest = demoRoute ? mockWarehouses.find(w => w.id === demoRoute.destinationWarehouseId) : undefined;
+  const assistantLine = demoVehicle ?
+    `**U-67** (License: ${demoVehicle.licensePlate})\n• **Status:** ${demoVehicle.status}\n• **Current Route:** ${demoRoute?.name || '—'}${demoOrigin && demoDest ? `\n• **From/To:** ${demoOrigin.name} → ${demoDest.name}` : ''}${demoVehicle.eta ? `\n• **ETA:** ${demoVehicle.eta} min` : ''}${demoVehicle.stopsRemaining !== undefined ? `\n• **Stops Remaining:** ${demoVehicle.stopsRemaining}` : ''}`
+    : 'I could not find vehicle U-67.';
+
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome-msg',
       type: 'assistant',
       content: 'Welcome to Fleet Control. Ask me about vehicles, routes, or warehouses. I can also help you dispatch vehicles and control the map.',
+      timestamp: new Date()
+    },
+    {
+      id: 'demo-user',
+      type: 'user',
+      content: 'Show me where the U-67 vehicle is',
+      timestamp: new Date()
+    },
+    {
+      id: 'demo-assistant',
+      type: 'assistant',
+      content: assistantLine,
       timestamp: new Date()
     }
   ]);

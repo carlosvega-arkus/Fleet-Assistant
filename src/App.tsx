@@ -140,7 +140,7 @@ function App() {
 
         <div className="flex-1 flex overflow-hidden relative">
           <main className="flex-1 relative overflow-hidden">
-            <FleetMap />
+            <FleetMap introOpen={showIntro} />
           </main>
 
           {activePanel && ActivePanelComponent && (
