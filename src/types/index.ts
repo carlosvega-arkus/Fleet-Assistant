@@ -103,3 +103,15 @@ export interface WarehouseTableData {
     inboundRoutes: number;
   }>;
 }
+
+// Traffic-related types for demo
+export type TrafficStatus = 'normal' | 'heavy' | 'closed';
+
+export interface RouteTrafficState {
+  routeId: string;
+  status: TrafficStatus;
+  delayMinutes?: number;
+  reason?: string;
+  coordinates: Coordinates;
+  updatedAt: Date;
+}

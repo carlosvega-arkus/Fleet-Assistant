@@ -59,6 +59,23 @@ const formatMessageContent = (content: string, isUser: boolean): JSX.Element => 
       return;
     }
 
+    // clickable See more link pattern: [See more|rt-001]
+    const seeMoreMatch = line.trim().match(/^\[See more\|(rt-\d{3})\]$/i);
+    if (seeMoreMatch) {
+      const rid = seeMoreMatch[1].toLowerCase();
+      elements.push(
+        <button
+          key={`see-more-${index}`}
+          data-action="see-more-traffic"
+          data-route={rid}
+          className={`text-sm underline ${isUser ? 'text-white' : 'text-arkus-blue'} cursor-pointer`}
+        >
+          See more...
+        </button>
+      );
+      return;
+    }
+
     if (line.startsWith('**') && line.endsWith('**')) {
       const text = line.replace(/\*\*/g, '');
       elements.push(
@@ -120,9 +137,22 @@ export function ChatAssistant() {
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [pendingDispatch, setPendingDispatch] = useState<{ vehicleId: string; routeId: string } | null>(null);
+  const [pendingReroute, setPendingReroute] = useState<{ routeId: string; avoid?: { lat: number; lng: number } } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { chatMessages, addChatMessage, vehicles, savedRoutes, warehouses, toggleRouteVisibility, setFocusedRoute, dispatchVehicle, visibleRouteIds } = useFleet();
+  const { chatMessages, addChatMessage, vehicles, savedRoutes, warehouses, toggleRouteVisibility, setFocusedRoute, dispatchVehicle, visibleRouteIds, routeTraffic, proposeDetour, confirmDetour } = useFleet();
+  const { focusTrafficAlert } = useFleet();
+
+  // Handle clicking See more... in chat to focus alert and expand details
+  const handleChatClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    const action = target?.getAttribute('data-action');
+    const rid = target?.getAttribute('data-route');
+    if (action === 'see-more-traffic' && rid) {
+      focusTrafficAlert(rid);
+      answerTrafficQueryLocally(`traffic ${rid}`);
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -156,13 +186,15 @@ export function ChatAssistant() {
       const origin = warehouses.find(w => w.id === r.originWarehouseId);
       const destination = warehouses.find(w => w.id === r.destinationWarehouseId);
       const assignedVehicle = vehicles.find(v => v.currentRouteId === r.id);
+      const traffic = routeTraffic[r.id];
 
       return `- ${r.id.toUpperCase()} (${r.name})
   Origin: ${origin?.name}
   Destination: ${destination?.name}
   Stops: ${r.stops.length} (${r.stops.map(s => s.businessName).join(', ')})
   Assigned Vehicle: ${assignedVehicle ? assignedVehicle.alias : 'None'}
-  Status: ${assignedVehicle ? 'Active' : 'Available'}`;
+  Status: ${assignedVehicle ? 'Active' : 'Available'}
+  Traffic: ${traffic ? `${traffic.status.toUpperCase()}${traffic.delayMinutes ? ` (+${traffic.delayMinutes} min)` : ''}` : 'UNKNOWN'}`;
     }).join('\n\n');
 
     const warehouseInfo = warehouses.map(w => {
@@ -178,6 +210,11 @@ export function ChatAssistant() {
 
     const efficiencyAnalysis = analyzeRouteEfficiency(savedRoutes, vehicles);
 
+    const trafficSummary = savedRoutes.map(r => {
+      const t = routeTraffic[r.id];
+      return `  - ${r.id.toUpperCase()}: ${t ? `${t.status}${t.delayMinutes ? ` (+${t.delayMinutes} min)` : ''}` : 'unknown'}`;
+    }).join('\n');
+
     return `AUTONOMOUS ELECTRIC FLEET MANAGEMENT SYSTEM DATA:
 
 === AUTONOMOUS ELECTRIC VEHICLES (${vehicles.length} total) ===
@@ -191,7 +228,84 @@ ${routeInfo}
 ${warehouseInfo}
 
 === EFFICIENCY ANALYSIS ===
-${efficiencyAnalysis}`;
+${efficiencyAnalysis}
+
+=== TRAFFIC STATUS ===
+${trafficSummary}`;
+  };
+
+  const answerTrafficQueryLocally = (userMessage: string): boolean => {
+    const lower = userMessage.toLowerCase();
+    if (lower.includes('traffic') || lower.includes('jam') || lower.includes('congestion') || lower.includes('closed') || lower.includes('delay')) {
+      // Try to detect a specific route
+      const idMatch = userMessage.match(/\brt[-_ ]?\d{3}\b/i);
+      let targetRoute = null as typeof savedRoutes[number] | null;
+      if (idMatch) {
+        const rid = idMatch[0].toLowerCase().replace(/[-_ ]/, '-');
+        targetRoute = savedRoutes.find(r => r.id === rid) || null;
+      } else {
+        targetRoute = savedRoutes.find(r => lower.includes(r.name.toLowerCase())) || null;
+      }
+
+      if (targetRoute) {
+        const t = routeTraffic[targetRoute.id];
+        if (!t || t.status === 'normal') {
+          addChatMessage({ type: 'assistant', content: `${targetRoute.id.toUpperCase()} (${targetRoute.name}) has no traffic alerts right now.` });
+          return true;
+        }
+        // Build contextual details similar to the map popup
+        let nearestStopText = '';
+        if (targetRoute.stops && targetRoute.stops.length > 0 && t.coordinates) {
+          const alertPos = t.coordinates;
+          let bestIdx = 0;
+          let bestDist = Infinity;
+          targetRoute.stops.forEach((s, idx) => {
+            const dLat = s.coordinates.lat - alertPos.lat;
+            const dLng = s.coordinates.lng - alertPos.lng;
+            const d2 = dLat * dLat + dLng * dLng;
+            if (d2 < bestDist) { bestDist = d2; bestIdx = idx; }
+          });
+          const s = targetRoute.stops[bestIdx];
+          nearestStopText = `Near Stop #${s.stopNumber} — ${s.businessName}${s.address ? ` (${s.address})` : ''}`;
+        }
+        const impact = t.status === 'closed' ? 'Segment closed; detour required.' : 'Heavy congestion; slower speeds expected.';
+        let suggestion = '';
+        const alt = savedRoutes.find(r => r.id !== targetRoute!.id && r.destinationWarehouseId === targetRoute!.destinationWarehouseId);
+        if (alt) {
+          suggestion = `Suggest detouring around the affected segment. I can modify ${targetRoute.id.toUpperCase()} to avoid this area ahead.`;
+          // create pending detour overlay and queue confirmation
+          setPendingReroute({ routeId: targetRoute.id, avoid: t.coordinates });
+          proposeDetour(targetRoute.id, t.coordinates, undefined);
+        } else if (targetRoute.stops.length > 1 && nearestStopText) {
+          const idx = targetRoute.stops.findIndex(x => nearestStopText.includes(x.businessName));
+          const sIdx = Math.max(1, Math.min(targetRoute.stops.length - 1, idx));
+          suggestion = `Detour between stops #${sIdx} and #${sIdx + 1} using arterials to bypass the affected segment.`;
+        } else {
+          suggestion = `Use major arterials around the affected area and rejoin the route afterward.`;
+        }
+
+        const content = `**Traffic alert for ${targetRoute.id.toUpperCase()} (${targetRoute.name})**\n• **Status:** ${t.status.toUpperCase()}${t.delayMinutes ? ` (+${t.delayMinutes} min)` : ''}\n${nearestStopText ? `• **Location:** ${nearestStopText}\n` : ''}• **Impact:** ${impact}\n• **Updated:** ${new Date(t.updatedAt).toLocaleTimeString()}\n\n**Detour proposal**\n${suggestion}${t.coordinates ? `\n\nWould you like me to modify ${targetRoute.id.toUpperCase()} to avoid this area ahead?` : ''}`;
+        addChatMessage({ type: 'assistant', content });
+        return true;
+      } else {
+        // Fall back to all impacted routes
+        const impacted = savedRoutes.filter(r => {
+          const t = routeTraffic[r.id];
+          return t && (t.status === 'heavy' || t.status === 'closed');
+        });
+        if (impacted.length === 0) {
+          addChatMessage({ type: 'assistant', content: 'Traffic looks clear on all routes at the moment.' });
+          return true;
+        }
+        const lines = impacted.map(r => {
+          const t = routeTraffic[r.id]!;
+          return `- ${r.id.toUpperCase()} (${r.name}): ${t.status.toUpperCase()}${t.delayMinutes ? ` (+${t.delayMinutes} min)` : ''}`;
+        }).join('\n');
+        addChatMessage({ type: 'assistant', content: `Here are the current traffic alerts affecting routes:\n${lines}` });
+        return true;
+      }
+    }
+    return false;
   };
 
   const handleAction = (actionText: string) => {
@@ -245,7 +359,6 @@ ${efficiencyAnalysis}`;
             const suggestedVehicle = suggestBestVehicle(route, vehicles);
             if (suggestedVehicle) {
               setPendingDispatch({ vehicleId: suggestedVehicle.alias, routeId: route.id });
-              return true;
             }
           }
         }
@@ -362,6 +475,41 @@ ${efficiencyAnalysis}`;
     });
 
     try {
+      // Confirm same-route detour flow
+      if (pendingReroute && (lowerMessage === 'yes' || lowerMessage === 'confirm' || lowerMessage === 'reroute' || lowerMessage === 'detour' || lowerMessage === 'si' || lowerMessage === 'ok')) {
+        const routeId = pendingReroute.routeId.toLowerCase();
+        if (pendingReroute.avoid) {
+          // compute minStartIndex based on current vehicles to ensure detour ahead
+          const route = savedRoutes.find(r => r.id === routeId);
+          const geom = route?.routeGeometry || [];
+          let maxProgressIdx = 0;
+          vehicles.filter(v => v.currentRouteId === routeId && v.currentPosition).forEach(v => {
+            const pos = v.currentPosition!;
+            let vi = 0; let vd2 = Number.POSITIVE_INFINITY;
+            for (let i = 0; i < geom.length; i++) {
+              const dx = geom[i].lng - pos.lng; const dy = geom[i].lat - pos.lat;
+              const d2 = dx * dx + dy * dy; if (d2 < vd2) { vd2 = d2; vi = i; }
+            }
+            if (vi > maxProgressIdx) maxProgressIdx = vi;
+          });
+          // ensure pending geometry uses correct forward insertion
+          proposeDetour(routeId, pendingReroute.avoid, { minStartIndex: maxProgressIdx });
+          confirmDetour(routeId);
+          if (!visibleRouteIds.has(routeId)) {
+            toggleRouteVisibility(routeId);
+          }
+          setFocusedRoute(routeId);
+          addChatMessage({ type: 'assistant', content: `✓ Route ${routeId.toUpperCase()} updated to avoid the affected area. Vehicles will follow the new detour.` });
+        }
+        setPendingReroute(null);
+        setIsProcessing(false);
+        return;
+      }
+      // Quick answer for traffic queries without calling the model
+      if (answerTrafficQueryLocally(userMessage)) {
+        setIsProcessing(false);
+        return;
+      }
       // Pre-validate intent: if user mentions a warehouse AND a specific route, ensure route destination matches the warehouse
       const routeIdMatch = userMessage.match(/\brt[-_ ]?\d{3}\b/i);
       const mentionedWarehouse = warehouses.find(w => lowerMessage.includes(w.name.toLowerCase()));
@@ -430,7 +578,7 @@ ${efficiencyAnalysis}`;
         const context = buildContext();
         const response = await queryGemini(userMessage, context);
 
-        const actionExecuted = handleAction(response);
+        handleAction(response);
 
         const parsed = parseStructuredResponse(userMessage, response);
 
@@ -452,7 +600,7 @@ ${efficiencyAnalysis}`;
                 setPendingDispatch({ vehicleId, routeId });
               }
             }
-          } catch (e) {
+          } catch {
             console.log('No dispatch suggestion found');
           }
         }
@@ -466,7 +614,7 @@ ${efficiencyAnalysis}`;
           });
         }
       }
-    } catch (error) {
+    } catch {
       addChatMessage({
         type: 'assistant',
         content: "I'm having trouble processing that request. Could you please try rephrasing?"
@@ -497,11 +645,12 @@ ${efficiencyAnalysis}`;
   const quickActions = [
     'List all routes',
     'Show route RT-001',
-    'List all vehicles'
+    'List all vehicles',
+    'Show traffic alerts'
   ];
 
   return (
-    <div className="flex flex-col h-full bg-white text-gray-900">
+    <div className="flex flex-col h-full bg-white text-gray-900" onClick={handleChatClick}>
       <div className="px-4 py-3 bg-white border-b border-gray-200 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 bg-arkus-blue rounded-full flex items-center justify-center shadow-md">
