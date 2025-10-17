@@ -15,6 +15,8 @@ export function FleetMap() {
   const [popupInfo, setPopupInfo] = useState<any>(null);
   const [show3D, setShow3D] = useState(true);
   const [showTraffic, setShowTraffic] = useState(false);
+  const [hoveredVehicleId, setHoveredVehicleId] = useState<string | null>(null);
+  const [hoveredStopId, setHoveredStopId] = useState<string | null>(null);
   // 3D references removed
 
   const inRouteVehicles = vehicles.filter(v => v.status === 'in_route' && v.currentPosition);
@@ -313,10 +315,19 @@ export function FleetMap() {
                     <div
                       className="relative group cursor-pointer"
                       onClick={() => setPopupInfo({ type: 'stop', data: stop })}
+                      onMouseEnter={() => setHoveredStopId(stop.id)}
+                      onMouseLeave={() => setHoveredStopId(prev => (prev === stop.id ? null : prev))}
                     >
-                      <div className={`w-8 h-8 bg-gradient-to-br ${isCompleted ? 'from-green-500 to-green-600' : 'from-orange-400 to-orange-600'} rounded-full flex items-center justify-center text-white font-bold text-sm shadow-xl border-2 border-white hover:scale-110 transition-all duration-300`}>
+                      <div className={`w-8 h-8 ${isCompleted ? 'bg-red-600' : 'bg-green-600'} rounded-full flex items-center justify-center text-white font-bold text-sm shadow-xl border-2 border-white hover:scale-110 transition-all duration-300`}>
                         {stop.stopNumber}
                       </div>
+
+                      {/* Hover label for stop */}
+                      {hoveredStopId === stop.id && (
+                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-white text-gray-800 text-xs rounded shadow-md border border-gray-200 whitespace-nowrap pointer-events-none">
+                          {stop.businessName}
+                        </div>
+                      )}
                     </div>
                   </Marker>
                 );
@@ -326,11 +337,11 @@ export function FleetMap() {
         })}
 
         {inRouteVehicles.map(vehicle => {
-          const statusColors: Record<string, string> = {
-            in_route: 'from-green-500 to-emerald-600',
-            idle: 'from-gray-400 to-gray-500',
-            available: 'from-arkus-blue to-blue-600',
-            maintenance: 'from-orange-500 to-orange-600'
+          const statusBg: Record<string, string> = {
+            in_route: 'bg-green-600',
+            idle: 'bg-gray-500',
+            available: 'bg-arkus-blue',
+            maintenance: 'bg-yellow-500'
           };
 
           return (
@@ -346,11 +357,23 @@ export function FleetMap() {
                   setPopupInfo({ type: 'vehicle', data: vehicle });
                   setFocusedVehicle(vehicle.id);
                 }}
+                onMouseEnter={() => setHoveredVehicleId(vehicle.id)}
+                onMouseLeave={() => setHoveredVehicleId(prev => (prev === vehicle.id ? null : prev))}
                 style={{ transition: 'all 0.5s ease-out' }}
               >
-                <div className={`w-9 h-9 bg-gradient-to-br ${statusColors[vehicle.status]} rounded-full flex items-center justify-center text-white shadow-2xl border-2 ${focusedVehicleId === vehicle.id ? 'border-yellow-400 border-4' : 'border-white'} hover:scale-110 transition-transform`}>
-                  <Truck className="w-5 h-5" />
+                {/* Pointy pin style */}
+                <div className="hover:scale-110 transition-transform">
+                  <div className={`w-9 h-9 ${statusBg[vehicle.status]} rounded-full flex items-center justify-center text-white shadow-2xl border-2 ${focusedVehicleId === vehicle.id ? 'border-yellow-400 border-4' : 'border-white'}`}>
+                    <Truck className="w-5 h-5" />
+                  </div>
                 </div>
+
+                {/* Hover label */}
+                {hoveredVehicleId === vehicle.id && (
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-white text-gray-800 text-xs rounded shadow-md border border-gray-200 whitespace-nowrap pointer-events-none">
+                    {vehicle.alias}
+                  </div>
+                )}
               </div>
             </Marker>
           );
