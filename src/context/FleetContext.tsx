@@ -191,6 +191,11 @@ export function FleetProvider({ children, navigateToChat, introOpen }: { childre
     setVisibleRouteIds(prev => {
       const newSet = new Set(prev);
       if (newSet.has(routeId)) {
+        // Prevent hiding a route that currently has an active vehicle in route
+        const hasActiveVehicle = vehicles.some(v => v.currentRouteId === routeId && v.status === 'in_route');
+        if (hasActiveVehicle) {
+          return prev; // no change
+        }
         newSet.delete(routeId);
         if (focusedRouteId === routeId) {
           setFocusedRouteId(null);
@@ -349,6 +354,19 @@ export function FleetProvider({ children, navigateToChat, introOpen }: { childre
 
   const requestTrafficPopupClose = (routeId: string) => setTrafficPopupCloseRequest(routeId);
   const clearTrafficPopupClose = () => setTrafficPopupCloseRequest(null);
+
+  // Ensure routes with active vehicles are always visible (prevents hide on load)
+  useEffect(() => {
+    setVisibleRouteIds(prev => {
+      const next = new Set(prev);
+      vehicles.forEach(v => {
+        if (v.status === 'in_route' && v.currentRouteId) {
+          next.add(v.currentRouteId);
+        }
+      });
+      return next;
+    });
+  }, [vehicles]);
 
   useEffect(() => {
     if (introOpen) return;

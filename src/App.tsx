@@ -12,7 +12,7 @@ import { Menu, Warehouse, Route, Truck, Send, X, MessageSquare } from 'lucide-re
 type Panel = 'warehouses' | 'routes' | 'vehicles' | 'dispatch' | 'chat';
 
 function App() {
-  const [activePanel, setActivePanel] = useState<Panel | null>('chat');
+  const [activePanel, setActivePanel] = useState<Panel | null>(() => (typeof window !== 'undefined' && window.innerWidth >= 1024 ? 'chat' : null));
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [panelWidth, setPanelWidth] = useState(384);
   const [isResizing, setIsResizing] = useState(false);
