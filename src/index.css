@@ -1,5 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
 
+/* Custom display font: Widescreen (provided in public/fonts) */
+@font-face {
+  font-family: 'Widescreen';
+  src: url('/fonts/Widescreen-Ex-Regular-GFXTRA.COM-iF66f65a6b3b92f.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -29,18 +38,18 @@
   .btn-gradient-arkus {
     background: white !important;
     border: 2px solid transparent !important;
-    background-image: linear-gradient(white, white), linear-gradient(90deg, #F70D3F 0%, #EC10A9 50%, #0055FF 100%) !important;
+    background-image: linear-gradient(white, white), linear-gradient(135deg, #F70D3F 0%, #EC10A9 50%, #0055FF 100%) !important;
     background-origin: border-box !important;
     background-clip: padding-box, border-box !important;
     color: #181818 !important;
   }
 
   .bg-gradient-arkus-solid {
-    background: linear-gradient(90deg, #F70D3F 0%, #EC10A9 50%, #0055FF 100%) !important;
+    background: linear-gradient(135deg, #F70D3F 0%, #EC10A9 50%, #0055FF 100%) !important;
   }
 
   .text-gradient-arkus {
-    background: linear-gradient(90deg, #F70D3F 0%, #EC10A9 50%, #0055FF 100%);
+    background: linear-gradient(135deg, #F70D3F 0%, #EC10A9 50%, #0055FF 100%);
     -webkit-background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     background-clip: text !important;
