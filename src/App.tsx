@@ -71,16 +71,6 @@ function App() {
 
   return (
     <FleetProvider navigateToChat={navigateToChat} introOpen={showIntro}>
-      {/* Global gradient defs for section icons */}
-      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden>
-        <defs>
-          <linearGradient id="grad-section-icon" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#F70D3F" />
-            <stop offset="50%" stopColor="#EC10A9" />
-            <stop offset="100%" stopColor="#0055FF" />
-          </linearGradient>
-        </defs>
-      </svg>
       <div className="h-screen w-screen flex flex-col overflow-hidden bg-gradient-to-br from-gray-50 via-purple-50/30 to-blue-50/40">
         <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 z-20 flex-shrink-0 shadow-lg">
           <div className="px-6 py-4 flex items-center justify-between">
@@ -89,7 +79,7 @@ function App() {
                 <Truck className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900 font-display">Autonomous Fleet Control</h1>
+                <h1 className="text-xl font-bold text-gray-900">Autonomous Fleet Control</h1>
                 <p className="text-xs text-gray-600">AI-Powered Electric Vehicle Management</p>
               </div>
             </div>

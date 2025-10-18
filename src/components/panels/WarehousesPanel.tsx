@@ -7,15 +7,7 @@ export function WarehousesPanel() {
   return (
     <div className="rounded-lg shadow-lg p-4 h-full overflow-y-auto">
       <div className="flex items-center gap-2 mb-4">
-        <Warehouse className="w-5 h-5" stroke="url(#grad-section-icon)" strokeWidth={2}>
-          <defs>
-            <linearGradient id="grad-section-icon" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#F70D3F" />
-              <stop offset="50%" stopColor="#EC10A9" />
-              <stop offset="100%" stopColor="#0055FF" />
-            </linearGradient>
-          </defs>
-        </Warehouse>
+        <Warehouse className="w-5 h-5 text-arkus-fuchsia" />
         <h2 className="text-lg font-bold text-gray-900">Warehouses</h2>
       </div>
 

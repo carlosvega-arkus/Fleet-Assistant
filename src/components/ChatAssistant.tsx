@@ -653,7 +653,7 @@ ${trafficSummary}`;
     <div className="flex flex-col h-full bg-white text-gray-900" onClick={handleChatClick}>
       <div className="px-4 py-3 bg-white border-b border-gray-200 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 bg-arkus-black rounded-full flex items-center justify-center shadow-md">
+          <div className="w-11 h-11 bg-arkus-blue rounded-full flex items-center justify-center shadow-md">
             <Bot className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -673,7 +673,7 @@ ${trafficSummary}`;
             className={`flex gap-2 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             {message.type === 'assistant' && (
-              <div className="w-8 h-8 bg-arkus-black rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+              <div className="w-8 h-8 bg-arkus-blue rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
                 <Bot className="w-4 h-4 text-white" />
               </div>
             )}
@@ -681,7 +681,7 @@ ${trafficSummary}`;
               <div
                 className={`rounded-2xl px-4 py-2.5 shadow-lg ${
                   message.type === 'user'
-                    ? 'bg-arkus-black text-white rounded-br-sm'
+                    ? 'bg-arkus-blue text-white rounded-br-sm'
                     : 'bg-gray-50 text-gray-800 border border-gray-200 rounded-tl-sm'
                 }`}
               >
@@ -707,14 +707,14 @@ ${trafficSummary}`;
         ))}
         {isProcessing && (
           <div className="flex gap-2 justify-start">
-            <div className="w-8 h-8 bg-arkus-black rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+            <div className="w-8 h-8 bg-arkus-blue rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
               <Bot className="w-4 h-4 text-white" />
             </div>
             <div className="bg-gray-50 border border-gray-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-lg">
               <div className="flex gap-1.5">
-                <div className="w-2 h-2 bg-arkus-black rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-arkus-black rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                <div className="w-2 h-2 bg-arkus-black rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                <div className="w-2 h-2 bg-arkus-blue rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-arkus-blue rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                <div className="w-2 h-2 bg-arkus-blue rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
               </div>
             </div>
           </div>
@@ -731,7 +731,7 @@ ${trafficSummary}`;
                 setInput(action);
                 inputRef.current?.focus();
               }}
-              className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full text-xs whitespace-nowrap transition-colors border border-gray-200"
+              className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-arkus-blue rounded-full text-xs whitespace-nowrap transition-colors border border-gray-200"
             >
               {action}
             </button>
@@ -756,7 +756,7 @@ ${trafficSummary}`;
               }, 0);
             }}
             disabled={!input.trim() || isProcessing}
-            className="w-10 h-10 bg-arkus-black text-white rounded-full hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center shadow-lg"
+            className="w-10 h-10 bg-arkus-blue text-white rounded-full hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center shadow-lg"
           >
             <Send className="w-4 h-4" />
           </button>
