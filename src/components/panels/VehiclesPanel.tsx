@@ -27,7 +27,7 @@ export function VehiclesPanel() {
   return (
     <div className="rounded-lg shadow-lg p-4 h-full overflow-y-auto">
       <div className="flex items-center gap-2 mb-4">
-        <Truck className="w-5 h-5 text-arkus-fuchsia" />
+        <Truck className="w-5 h-5" stroke="url(#grad-section-icon)" strokeWidth={2} />
         <h2 className="text-lg font-bold text-gray-900">Autonomous EVs</h2>
         <span className="ml-auto text-sm text-gray-600">{vehicles.length} total</span>
       </div>
