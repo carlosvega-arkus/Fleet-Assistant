@@ -15,7 +15,7 @@ export function MobilePanelController({ activePanel, setMobilePanelHeight }: Mob
     const hasFocusedElement = focusedRouteId || focusedVehicleId || focusedWarehouseId;
     
     // Don't minimize if chat is active (chat has its own floating behavior)
-    if (activePanel === 'chat') return;
+    if (activePanel === 'chat' || activePanel === 'dispatch') return;
     
     if (activePanel && hasFocusedElement) {
       setMobilePanelHeight(15); // Minimize to show just the header

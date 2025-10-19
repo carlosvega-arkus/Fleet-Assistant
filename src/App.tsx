@@ -137,6 +137,13 @@ function App() {
     };
   }, [isResizing]);
 
+  // Listen for closeMobilePanel events from child panels (e.g., Dispatch)
+  useEffect(() => {
+    const handler = () => setActivePanel(null);
+    window.addEventListener('closeMobilePanel', handler as any);
+    return () => window.removeEventListener('closeMobilePanel', handler as any);
+  }, []);
+
   const handleMouseDown = () => {
     setIsResizing(true);
   };
@@ -311,18 +318,20 @@ function App() {
             <div 
               className="lg:hidden fixed inset-x-0 bottom-0 bg-white/95 backdrop-blur-sm shadow-2xl z-40 rounded-t-3xl overflow-hidden"
               style={{ 
-                height: `${mobilePanelHeight}vh`, 
-                transition: isMobilePanelDragging ? 'none' : 'height 300ms ease-out' 
+                height: activePanel === 'dispatch' ? '37vh' : `${mobilePanelHeight}vh`, 
+                transition: activePanel === 'dispatch' ? 'height 0ms' : (isMobilePanelDragging ? 'none' : 'height 300ms ease-out') 
               }}
             >
               {/* Drag handle */}
-              <div
-                onMouseDown={handleMobilePanelMouseDown}
-                onTouchStart={handleMobilePanelTouchStart}
-                className="w-full py-2 cursor-row-resize flex items-center justify-center hover:bg-gray-100 transition-colors"
-              >
-                <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
-              </div>
+              {activePanel !== 'dispatch' && (
+                <div
+                  onMouseDown={handleMobilePanelMouseDown}
+                  onTouchStart={handleMobilePanelTouchStart}
+                  className="w-full py-2 cursor-row-resize flex items-center justify-center hover:bg-gray-100 transition-colors"
+                >
+                  <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
+                </div>
+              )}
               
               <div className="h-full overflow-y-auto">
                 <div className="p-4">
