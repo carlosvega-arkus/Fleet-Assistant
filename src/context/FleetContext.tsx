@@ -35,6 +35,11 @@ interface FleetContextType {
   markTrafficHeadsUpShown: (routeId: string) => void;
   requestTrafficPopupClose: (routeId: string) => void;
   clearTrafficPopupClose: () => void;
+  isChatOpen: boolean;
+  unreadCount: number;
+  openChat: () => void;
+  closeChat: () => void;
+  resetUnread: () => void;
 }
 
 const FleetContext = createContext<FleetContextType | undefined>(undefined);
@@ -53,6 +58,8 @@ export function FleetProvider({ children, navigateToChat, introOpen }: { childre
   const [simulatedTrafficRouteId, setSimulatedTrafficRouteId] = useState<string | null>(null);
   const [trafficHeadsUpShown, setTrafficHeadsUpShown] = useState<Record<string, boolean>>({});
   const [trafficPopupCloseRequest, setTrafficPopupCloseRequest] = useState<string | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   // Seed chat with a demo interaction about U-67
   const demoVehicle = initialVehicles.find(v => v.alias === 'U-67');
   const demoRoute = demoVehicle?.currentRouteId ? mockSavedRoutes.find(r => r.id === demoVehicle.currentRouteId) : undefined;
@@ -214,6 +221,24 @@ export function FleetProvider({ children, navigateToChat, introOpen }: { childre
       timestamp: new Date()
     };
     setChatMessages(prev => [...prev, newMessage]);
+    
+    // Increment unread count for assistant messages when chat is closed
+    if (message.type === 'assistant' && !isChatOpen) {
+      setUnreadCount(prev => prev + 1);
+    }
+  };
+
+  const openChat = () => {
+    setIsChatOpen(true);
+    setUnreadCount(0);
+  };
+
+  const closeChat = () => {
+    setIsChatOpen(false);
+  };
+
+  const resetUnread = () => {
+    setUnreadCount(0);
   };
 
   const dispatchVehicle = (vehicleId: string, routeId: string) => {
@@ -503,7 +528,12 @@ export function FleetProvider({ children, navigateToChat, introOpen }: { childre
         cancelDetour,
         markTrafficHeadsUpShown,
         requestTrafficPopupClose,
-        clearTrafficPopupClose
+        clearTrafficPopupClose,
+        isChatOpen,
+        unreadCount,
+        openChat,
+        closeChat,
+        resetUnread
       }}
     >
       {children}

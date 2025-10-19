@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { FleetProvider } from './context/FleetContext';
+import { FleetProvider, useFleet } from './context/FleetContext';
 import { FleetMap } from './components/FleetMap';
 import { WarehousesPanel } from './components/panels/WarehousesPanel';
 import { RoutesPanel } from './components/panels/RoutesPanel';
@@ -8,7 +8,7 @@ import { DispatchPanel } from './components/panels/DispatchPanel';
 import { ChatAssistant } from './components/ChatAssistant';
 import { IntroModal } from './components/IntroModal';
 import { MobilePanelController } from './components/MobilePanelController';
-import { Menu, Warehouse, Route, Truck, Send, X, MessageSquare } from 'lucide-react';
+import { Menu, Warehouse, Route, Truck, Send, X, MessageSquare, Bot } from 'lucide-react';
 
 type Panel = 'warehouses' | 'routes' | 'vehicles' | 'dispatch' | 'chat';
 
@@ -32,6 +32,33 @@ function App() {
   };
 
   const ActivePanelComponent = activePanel ? panels[activePanel].component : null;
+
+  // Mobile chat bubble component
+  function MobileChatBubble({ activePanel, setActivePanel }: { activePanel: Panel | null; setActivePanel: (p: Panel | null) => void }) {
+    const { isChatOpen, unreadCount, openChat, resetUnread } = useFleet();
+    
+    // Only show bubble when chat is not active and we're on mobile
+    if (typeof window !== 'undefined' && window.innerWidth >= 1024) return null;
+    if (activePanel === 'chat') return null;
+    
+    return (
+      <button
+        onClick={() => {
+          setActivePanel('chat');
+          openChat();
+          resetUnread();
+        }}
+        className="lg:hidden fixed bottom-4 right-4 z-50 rounded-full shadow-xl bg-arkus-black text-white w-14 h-14 flex items-center justify-center active:scale-95 transition-transform"
+      >
+        <Bot className="w-6 h-6" />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-600 text-white text-xs flex items-center justify-center border border-white">
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
+      </button>
+    );
+  }
 
 
 
@@ -136,6 +163,10 @@ function App() {
       </svg>
       <div className="h-screen w-screen flex flex-col overflow-hidden bg-gradient-to-br from-gray-50 via-purple-50/30 to-blue-50/40">
         <MobilePanelController activePanel={activePanel} setMobilePanelHeight={setMobilePanelHeight} />
+        
+        {/* Mobile chat bubble - only show when chat is not active */}
+        <MobileChatBubble activePanel={activePanel} setActivePanel={setActivePanel} />
+        
         <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 z-20 flex-shrink-0 shadow-lg">
           <div className="px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -225,7 +256,8 @@ function App() {
             </aside>
           )}
 
-          {activePanel && ActivePanelComponent && (
+          {/* Mobile panels - exclude chat */}
+          {activePanel && activePanel !== 'chat' && ActivePanelComponent && (
             <div 
               className="lg:hidden fixed inset-x-0 bottom-0 bg-white/95 backdrop-blur-sm shadow-2xl z-40 rounded-t-3xl overflow-hidden"
               style={{ 
@@ -243,9 +275,38 @@ function App() {
               </div>
               
               <div className="h-full overflow-y-auto">
-                <div className={activePanel === 'chat' ? 'h-full' : 'p-4'}>
+                <div className="p-4">
                   <ActivePanelComponent />
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Mobile chat - floating bubble */}
+          {activePanel === 'chat' && (
+            <div className="lg:hidden fixed inset-x-4 bottom-4 bg-white/95 backdrop-blur-sm shadow-2xl z-50 rounded-2xl overflow-hidden max-h-[80vh] flex flex-col">
+              <div className="flex-shrink-0 p-4 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-arkus-black rounded-full flex items-center justify-center">
+                      <Bot className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Fleet AI Assistant</h3>
+                      <p className="text-xs text-gray-500">Online</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setActivePanel(null)}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <X className="w-4 h-4 text-gray-600" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="flex-1 min-h-0 overflow-hidden">
+                <ChatAssistant />
               </div>
             </div>
           )}
