@@ -322,6 +322,15 @@ function App() {
               onTouchMove={(e) => { e.stopPropagation(); }}
               onWheel={(e) => { e.stopPropagation(); }}
             >
+              {/* Close button */}
+              <button
+                type="button"
+                aria-label="Close chat"
+                onClick={() => setActivePanel(null)}
+                className="absolute top-2 right-2 z-10 p-2 rounded-full bg-white/90 border border-gray-200 shadow hover:bg-gray-100 active:scale-95 transition"
+              >
+                <X className="w-4 h-4 text-gray-700" />
+              </button>
               
               <div className="flex-1 min-h-0 overflow-hidden" style={{ overscrollBehaviorY: 'contain' }}>
                 <ChatAssistant />
