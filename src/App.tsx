@@ -7,6 +7,7 @@ import { VehiclesPanel } from './components/panels/VehiclesPanel';
 import { DispatchPanel } from './components/panels/DispatchPanel';
 import { ChatAssistant } from './components/ChatAssistant';
 import { IntroModal } from './components/IntroModal';
+import { MobilePanelController } from './components/MobilePanelController';
 import { Menu, Warehouse, Route, Truck, Send, X, MessageSquare } from 'lucide-react';
 
 type Panel = 'warehouses' | 'routes' | 'vehicles' | 'dispatch' | 'chat';
@@ -17,7 +18,10 @@ function App() {
   const [panelWidth, setPanelWidth] = useState(384);
   const [isResizing, setIsResizing] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
+  const [mobilePanelHeight, setMobilePanelHeight] = useState(60);
+  const [isMobilePanelDragging, setIsMobilePanelDragging] = useState(false);
   const resizeRef = useRef<HTMLDivElement>(null);
+  const mobileDragRef = useRef<{ startY: number; startHeight: number } | null>(null);
 
   const panels = {
     warehouses: { component: WarehousesPanel, icon: Warehouse, label: 'Warehouses' },
@@ -28,6 +32,8 @@ function App() {
   };
 
   const ActivePanelComponent = activePanel ? panels[activePanel].component : null;
+
+
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -65,6 +71,53 @@ function App() {
     setIsResizing(true);
   };
 
+  // Mobile panel drag handlers
+  const handleMobilePanelMouseDown = (e: React.MouseEvent) => {
+    setIsMobilePanelDragging(true);
+    mobileDragRef.current = { startY: e.clientY, startHeight: mobilePanelHeight };
+    
+    const handleMouseMove = (ev: MouseEvent) => {
+      if (!mobileDragRef.current) return;
+      const dy = ev.clientY - mobileDragRef.current.startY;
+      const newHeight = Math.max(15, Math.min(85, mobileDragRef.current.startHeight - (dy / window.innerHeight) * 100));
+      setMobilePanelHeight(newHeight);
+    };
+    
+    const handleMouseUp = () => {
+      setIsMobilePanelDragging(false);
+      mobileDragRef.current = null;
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleMobilePanelTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setIsMobilePanelDragging(true);
+    mobileDragRef.current = { startY: touch.clientY, startHeight: mobilePanelHeight };
+    
+    const handleTouchMove = (ev: TouchEvent) => {
+      if (!mobileDragRef.current) return;
+      const t = ev.touches[0];
+      const dy = t.clientY - mobileDragRef.current.startY;
+      const newHeight = Math.max(15, Math.min(85, mobileDragRef.current.startHeight - (dy / window.innerHeight) * 100));
+      setMobilePanelHeight(newHeight);
+    };
+    
+    const handleTouchEnd = () => {
+      setIsMobilePanelDragging(false);
+      mobileDragRef.current = null;
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+    
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+  };
+
   const navigateToChat = () => {
     setActivePanel('chat');
   };
@@ -82,6 +135,7 @@ function App() {
         </defs>
       </svg>
       <div className="h-screen w-screen flex flex-col overflow-hidden bg-gradient-to-br from-gray-50 via-purple-50/30 to-blue-50/40">
+        <MobilePanelController activePanel={activePanel} setMobilePanelHeight={setMobilePanelHeight} />
         <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 z-20 flex-shrink-0 shadow-lg">
           <div className="px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -172,9 +226,26 @@ function App() {
           )}
 
           {activePanel && ActivePanelComponent && (
-            <div className="lg:hidden fixed inset-x-0 bottom-0 bg-white/95 backdrop-blur-sm shadow-2xl z-40 rounded-t-3xl max-h-[75vh] overflow-y-auto">
-              <div className={activePanel === 'chat' ? 'h-full' : 'p-4'}>
-                <ActivePanelComponent />
+            <div 
+              className="lg:hidden fixed inset-x-0 bottom-0 bg-white/95 backdrop-blur-sm shadow-2xl z-40 rounded-t-3xl overflow-hidden"
+              style={{ 
+                height: `${mobilePanelHeight}vh`, 
+                transition: isMobilePanelDragging ? 'none' : 'height 300ms ease-out' 
+              }}
+            >
+              {/* Drag handle */}
+              <div
+                onMouseDown={handleMobilePanelMouseDown}
+                onTouchStart={handleMobilePanelTouchStart}
+                className="w-full py-2 cursor-row-resize flex items-center justify-center hover:bg-gray-100 transition-colors"
+              >
+                <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
+              </div>
+              
+              <div className="h-full overflow-y-auto">
+                <div className={activePanel === 'chat' ? 'h-full' : 'p-4'}>
+                  <ActivePanelComponent />
+                </div>
               </div>
             </div>
           )}
