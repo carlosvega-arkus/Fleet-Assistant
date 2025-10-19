@@ -33,6 +33,30 @@ function App() {
 
   const ActivePanelComponent = activePanel ? panels[activePanel].component : null;
 
+  // Lock body scroll when floating chat is open (mobile)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const htmlEl = document.documentElement as HTMLElement;
+    const bodyEl = document.body as HTMLBodyElement;
+    const prevBodyOverflow = bodyEl.style.overflow;
+    const prevBodyTouchAction = (bodyEl.style as any).touchAction as string | undefined;
+    const prevHtmlOverscrollY = (htmlEl.style as any).overscrollBehaviorY as string | undefined;
+    if (activePanel === 'chat') {
+      bodyEl.style.overflow = 'hidden';
+      (bodyEl.style as any).touchAction = 'none';
+      (htmlEl.style as any).overscrollBehaviorY = 'none';
+    } else {
+      bodyEl.style.overflow = prevBodyOverflow || '';
+      (bodyEl.style as any).touchAction = prevBodyTouchAction || '';
+      (htmlEl.style as any).overscrollBehaviorY = prevHtmlOverscrollY || '';
+    }
+    return () => {
+      bodyEl.style.overflow = prevBodyOverflow || '';
+      (bodyEl.style as any).touchAction = prevBodyTouchAction || '';
+      (htmlEl.style as any).overscrollBehaviorY = prevHtmlOverscrollY || '';
+    };
+  }, [activePanel]);
+
   // Mobile chat bubble component
   function MobileChatBubble({ activePanel, setActivePanel }: { activePanel: Panel | null; setActivePanel: (p: Panel | null) => void }) {
     const { isChatOpen, unreadCount, openChat, resetUnread } = useFleet();
@@ -234,7 +258,13 @@ function App() {
         </header>
 
         <div className="flex-1 flex overflow-hidden relative">
-          <main className="flex-1 relative overflow-hidden">
+          <main className="flex-1 relative overflow-hidden" onTouchMove={(e) => {
+            // If a floating modal (chat) is present, don't let the map scroll hijack the gesture
+            const target = e.target as HTMLElement;
+            if (target && (target.closest('[data-chat-modal="true"]'))) {
+              e.stopPropagation();
+            }
+          }}>
             <FleetMap introOpen={showIntro} />
           </main>
 
@@ -284,28 +314,16 @@ function App() {
 
           {/* Mobile chat - floating bubble */}
           {activePanel === 'chat' && (
-            <div className="lg:hidden fixed inset-x-4 bottom-4 bg-white/95 backdrop-blur-sm shadow-2xl z-50 rounded-2xl overflow-hidden max-h-[80vh] flex flex-col">
-              <div className="flex-shrink-0 p-4 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-arkus-black rounded-full flex items-center justify-center">
-                      <Bot className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">Fleet AI Assistant</h3>
-                      <p className="text-xs text-gray-500">Online</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setActivePanel(null)}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                  >
-                    <X className="w-4 h-4 text-gray-600" />
-                  </button>
-                </div>
-              </div>
+            <div
+              className="lg:hidden fixed inset-x-4 bottom-4 bg-white/95 backdrop-blur-sm shadow-2xl z-50 rounded-2xl overflow-hidden flex flex-col pointer-events-auto"
+              data-chat-modal="true"
+              style={{ touchAction: 'manipulation', height: '75vh' }}
+              onTouchStart={(e) => { e.stopPropagation(); }}
+              onTouchMove={(e) => { e.stopPropagation(); }}
+              onWheel={(e) => { e.stopPropagation(); }}
+            >
               
-              <div className="flex-1 min-h-0 overflow-hidden">
+              <div className="flex-1 min-h-0 overflow-hidden" style={{ overscrollBehaviorY: 'contain' }}>
                 <ChatAssistant />
               </div>
             </div>
