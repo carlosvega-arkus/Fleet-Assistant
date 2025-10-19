@@ -35,6 +35,11 @@ interface FleetContextType {
   markTrafficHeadsUpShown: (routeId: string) => void;
   requestTrafficPopupClose: (routeId: string) => void;
   clearTrafficPopupClose: () => void;
+  isChatOpen: boolean;
+  unreadCount: number;
+  openChat: () => void;
+  closeChat: () => void;
+  resetUnread: () => void;
 }
 
 const FleetContext = createContext<FleetContextType | undefined>(undefined);
@@ -53,6 +58,9 @@ export function FleetProvider({ children, navigateToChat, introOpen }: { childre
   const [simulatedTrafficRouteId, setSimulatedTrafficRouteId] = useState<string | null>(null);
   const [trafficHeadsUpShown, setTrafficHeadsUpShown] = useState<Record<string, boolean>>({});
   const [trafficPopupCloseRequest, setTrafficPopupCloseRequest] = useState<string | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [lastReadAt, setLastReadAt] = useState<Date | null>(null);
   // Seed chat with a demo interaction about U-67
   const demoVehicle = initialVehicles.find(v => v.alias === 'U-67');
   const demoRoute = demoVehicle?.currentRouteId ? mockSavedRoutes.find(r => r.id === demoVehicle.currentRouteId) : undefined;
@@ -191,6 +199,11 @@ export function FleetProvider({ children, navigateToChat, introOpen }: { childre
     setVisibleRouteIds(prev => {
       const newSet = new Set(prev);
       if (newSet.has(routeId)) {
+        // Prevent hiding a route that currently has an active vehicle in route
+        const hasActiveVehicle = vehicles.some(v => v.currentRouteId === routeId && v.status === 'in_route');
+        if (hasActiveVehicle) {
+          return prev; // no change
+        }
         newSet.delete(routeId);
         if (focusedRouteId === routeId) {
           setFocusedRouteId(null);
@@ -209,7 +222,38 @@ export function FleetProvider({ children, navigateToChat, introOpen }: { childre
       timestamp: new Date()
     };
     setChatMessages(prev => [...prev, newMessage]);
+    
+    // Increment unread count for assistant messages when chat is closed
+    if (message.type === 'assistant' && !isChatOpen) {
+      setUnreadCount(prev => prev + 1);
+    }
   };
+
+  const openChat = () => {
+    setIsChatOpen(true);
+    setUnreadCount(0);
+    setLastReadAt(new Date());
+  };
+
+  const closeChat = () => {
+    setIsChatOpen(false);
+  };
+
+  const resetUnread = () => {
+    setUnreadCount(0);
+    setLastReadAt(new Date());
+  };
+
+  // Derive unread from messages if needed (ensures badge appears even if counter increment missed)
+  useEffect(() => {
+    if (!isChatOpen) {
+      const since = lastReadAt ? lastReadAt.getTime() : 0;
+      const count = chatMessages.reduce((acc, m) => acc + ((m.type === 'assistant' && m.timestamp.getTime() > since) ? 1 : 0), 0);
+      if (count !== unreadCount) setUnreadCount(count);
+    } else if (unreadCount !== 0) {
+      setUnreadCount(0);
+    }
+  }, [chatMessages, isChatOpen, lastReadAt]);
 
   const dispatchVehicle = (vehicleId: string, routeId: string) => {
     setVehicles(prev => prev.map(vehicle =>
@@ -350,6 +394,19 @@ export function FleetProvider({ children, navigateToChat, introOpen }: { childre
   const requestTrafficPopupClose = (routeId: string) => setTrafficPopupCloseRequest(routeId);
   const clearTrafficPopupClose = () => setTrafficPopupCloseRequest(null);
 
+  // Ensure routes with active vehicles are always visible (prevents hide on load)
+  useEffect(() => {
+    setVisibleRouteIds(prev => {
+      const next = new Set(prev);
+      vehicles.forEach(v => {
+        if (v.status === 'in_route' && v.currentRouteId) {
+          next.add(v.currentRouteId);
+        }
+      });
+      return next;
+    });
+  }, [vehicles]);
+
   useEffect(() => {
     if (introOpen) return;
     const inRouteVehicles = vehicles.filter(v => v.status === 'in_route' && v.currentRouteId);
@@ -485,7 +542,12 @@ export function FleetProvider({ children, navigateToChat, introOpen }: { childre
         cancelDetour,
         markTrafficHeadsUpShown,
         requestTrafficPopupClose,
-        clearTrafficPopupClose
+        clearTrafficPopupClose,
+        isChatOpen,
+        unreadCount,
+        openChat,
+        closeChat,
+        resetUnread
       }}
     >
       {children}
