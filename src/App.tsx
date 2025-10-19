@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { FleetProvider, useFleet } from './context/FleetContext';
 import { FleetMap } from './components/FleetMap';
 import { WarehousesPanel } from './components/panels/WarehousesPanel';
@@ -57,6 +58,21 @@ function App() {
     };
   }, [activePanel]);
 
+  // Sync chat open/close with activePanel
+  function ChatStateSync({ active }: { active: Panel | null }) {
+    const { openChat, closeChat, resetUnread } = useFleet();
+    useEffect(() => {
+      if (typeof window !== 'undefined' && window.innerWidth >= 1024) return;
+      if (active === 'chat') {
+        openChat();
+        resetUnread();
+      } else {
+        closeChat();
+      }
+    }, [active, openChat, closeChat, resetUnread]);
+    return null;
+  }
+
   // Mobile chat bubble component
   function MobileChatBubble({ activePanel, setActivePanel }: { activePanel: Panel | null; setActivePanel: (p: Panel | null) => void }) {
     const { isChatOpen, unreadCount, openChat, resetUnread } = useFleet();
@@ -65,14 +81,15 @@ function App() {
     if (typeof window !== 'undefined' && window.innerWidth >= 1024) return null;
     if (activePanel === 'chat') return null;
     
-    return (
+    const bubble = (
       <button
         onClick={() => {
           setActivePanel('chat');
           openChat();
           resetUnread();
         }}
-        className="lg:hidden fixed bottom-4 right-4 z-50 rounded-full shadow-xl bg-arkus-black text-white w-14 h-14 flex items-center justify-center active:scale-95 transition-transform"
+        className="lg:hidden rounded-full shadow-xl bg-arkus-black text-white w-14 h-14 flex items-center justify-center active:scale-95 transition-transform relative"
+        style={{ position: 'fixed', bottom: 16, right: 16, zIndex: 1000 }}
       >
         <Bot className="w-6 h-6" />
         {unreadCount > 0 && (
@@ -82,6 +99,8 @@ function App() {
         )}
       </button>
     );
+
+    return typeof document !== 'undefined' ? createPortal(bubble, document.body) : bubble;
   }
 
 
@@ -187,6 +206,7 @@ function App() {
       </svg>
       <div className="h-screen w-screen flex flex-col overflow-hidden bg-gradient-to-br from-gray-50 via-purple-50/30 to-blue-50/40">
         <MobilePanelController activePanel={activePanel} setMobilePanelHeight={setMobilePanelHeight} />
+        <ChatStateSync active={activePanel} />
         
         {/* Mobile chat bubble - only show when chat is not active */}
         <MobileChatBubble activePanel={activePanel} setActivePanel={setActivePanel} />

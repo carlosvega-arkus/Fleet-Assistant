@@ -60,6 +60,7 @@ export function FleetProvider({ children, navigateToChat, introOpen }: { childre
   const [trafficPopupCloseRequest, setTrafficPopupCloseRequest] = useState<string | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [lastReadAt, setLastReadAt] = useState<Date | null>(null);
   // Seed chat with a demo interaction about U-67
   const demoVehicle = initialVehicles.find(v => v.alias === 'U-67');
   const demoRoute = demoVehicle?.currentRouteId ? mockSavedRoutes.find(r => r.id === demoVehicle.currentRouteId) : undefined;
@@ -231,6 +232,7 @@ export function FleetProvider({ children, navigateToChat, introOpen }: { childre
   const openChat = () => {
     setIsChatOpen(true);
     setUnreadCount(0);
+    setLastReadAt(new Date());
   };
 
   const closeChat = () => {
@@ -239,7 +241,19 @@ export function FleetProvider({ children, navigateToChat, introOpen }: { childre
 
   const resetUnread = () => {
     setUnreadCount(0);
+    setLastReadAt(new Date());
   };
+
+  // Derive unread from messages if needed (ensures badge appears even if counter increment missed)
+  useEffect(() => {
+    if (!isChatOpen) {
+      const since = lastReadAt ? lastReadAt.getTime() : 0;
+      const count = chatMessages.reduce((acc, m) => acc + ((m.type === 'assistant' && m.timestamp.getTime() > since) ? 1 : 0), 0);
+      if (count !== unreadCount) setUnreadCount(count);
+    } else if (unreadCount !== 0) {
+      setUnreadCount(0);
+    }
+  }, [chatMessages, isChatOpen, lastReadAt]);
 
   const dispatchVehicle = (vehicleId: string, routeId: string) => {
     setVehicles(prev => prev.map(vehicle =>
