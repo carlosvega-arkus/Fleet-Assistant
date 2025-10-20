@@ -789,7 +789,7 @@ ${trafficSummary}`;
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Type a message..."
-            className="flex-1 px-3 sm:px-4 py-2.5 bg-gray-100 border border-gray-300 rounded-full focus:ring-2 focus:ring-arkus-scarlet focus:border-arkus-scarlet text-sm placeholder-gray-500 transition-all text-gray-900"
+            className="flex-1 px-3 sm:px-4 py-2.5 bg-gray-100 border border-gray-300 rounded-full focus:ring-2 focus:ring-arkus-scarlet focus:border-arkus-scarlet text-[16px] sm:text-sm placeholder-gray-500 transition-all text-gray-900"
           />
           <button
             onClick={() => {
