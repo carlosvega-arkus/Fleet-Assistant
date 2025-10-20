@@ -27,7 +27,7 @@ export function WarehousesPanel() {
             <div
               key={warehouse.id}
               className={`border rounded-lg p-3 transition-all ${
-                isFocused ? 'border-arkus-fuchsia bg-pink-50' : 'border-gray-200 bg-white hover:border-arkus-blue'
+                isFocused ? 'btn-gradient-arkus border-2 from-arkus-scarlet via-arkus-fuchsia to-arkus-blue bg-clip-border text-gray-700 bg-gray-100' : 'border-gray-200 bg-white hover:border-arkus-blue'
               }`}
             >
               <h3 className="font-semibold text-sm mb-1 text-gray-900">{warehouse.name}</h3>
@@ -41,7 +41,7 @@ export function WarehousesPanel() {
                 onClick={() => setFocusedWarehouse(isFocused ? null : warehouse.id)}
                 className={`w-full mt-2 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                   isFocused
-                    ? 'bg-gradient-arkus text-white hover:shadow-lg'
+                    ? 'bg-gray-100 btn-gradient-arkus border-2 from-arkus-scarlet via-arkus-fuchsia to-arkus-blue bg-clip-border text-gray-700'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
