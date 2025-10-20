@@ -71,7 +71,7 @@ export function RoutesPanel() {
                   setFocusedRoute(r.id);
                 }}
                 className={`w-full mt-2 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                  isFocused ? 'bg-gradient-arkus text-white hover:shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  isFocused ? 'bg-gray-100 btn-gradient-arkus border-2 from-arkus-scarlet via-arkus-fuchsia to-arkus-blue bg-clip-border text-gray-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
                 <Focus className="w-3 h-3 inline mr-1" />
