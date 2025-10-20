@@ -352,19 +352,27 @@ function App() {
             </div>
           )}
 
-          {/* Mobile chat - floating bubble */}
-          {activePanel === 'chat' && (
+          {/* Mobile chat - floating bubble (portal to avoid clipping and ensure safe bounds) */}
+          {activePanel === 'chat' && createPortal(
             <div
-              className="lg:hidden fixed inset-x-2 sm:inset-x-4 bg-white/95 backdrop-blur-sm shadow-2xl z-50 rounded-2xl overflow-hidden flex flex-col pointer-events-auto"
+              className="lg:hidden fixed bg-white/95 backdrop-blur-sm shadow-2xl z-50 rounded-2xl overflow-hidden flex flex-col pointer-events-auto"
               data-chat-modal="true"
-              style={{ 
-                touchAction: 'manipulation',
+              style={{
+                position: 'fixed',
+                // Safe horizontal bounds so it never exceeds visible width
+                left: 'max(0.5rem, env(safe-area-inset-left))',
+                right: 'max(0.5rem, env(safe-area-inset-right))',
                 bottom: 'max(1rem, env(safe-area-inset-bottom))',
-                height: 'min(75svh, calc(100svh - 2rem))',
+                maxWidth: 'calc(100vw - (env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px) + 1rem))',
+                width: 'auto',
+                boxSizing: 'border-box',
+                // Safe-height units for iOS URL bar behavior
+                height: 'min(75svh, 75dvh, calc(100svh - 2rem))',
                 maxHeight: 'calc(100svh - 2rem)',
                 minHeight: '360px',
                 paddingTop: 'env(safe-area-inset-top)',
-                paddingBottom: 'env(safe-area-inset-bottom)'
+                paddingBottom: 'env(safe-area-inset-bottom)',
+                touchAction: 'manipulation'
               }}
               onTouchStart={(e) => { e.stopPropagation(); }}
               onTouchMove={(e) => { e.stopPropagation(); }}
@@ -383,11 +391,12 @@ function App() {
               >
                 <X className="w-4 h-4 text-gray-700" />
               </button>
-              
+
               <div className="flex-1 min-h-0 overflow-hidden" style={{ overscrollBehaviorY: 'contain' }}>
                 <ChatAssistant onClose={() => setActivePanel(null)} />
               </div>
-            </div>
+            </div>,
+            document.body
           )}
         </div>
 
