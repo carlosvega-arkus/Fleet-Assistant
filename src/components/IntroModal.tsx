@@ -56,8 +56,8 @@ export function IntroModal({ onClose }: IntroModalProps) {
   const Icon = currentStepData.icon;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="relative w-full max-w-2xl mx-4 bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="relative w-full max-w-2xl md:max-w-2xl max-h-[90vh] bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all z-10"
@@ -65,23 +65,23 @@ export function IntroModal({ onClose }: IntroModalProps) {
           <X className="w-5 h-5" />
         </button>
 
-        <div className="p-8">
-          <div className="flex items-center justify-center mb-6">
-            <div className="w-20 h-20 bg-gradient-arkus-solid rounded-2xl flex items-center justify-center shadow-lg">
-              <Icon className="w-10 h-10 text-white" />
+        <div className="p-4 md:p-8 overflow-y-auto max-h-full">
+          <div className="flex items-center justify-center mb-4 md:mb-6">
+            <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-arkus-solid rounded-2xl flex items-center justify-center shadow-lg">
+              <Icon className="w-8 h-8 md:w-10 md:h-10 text-white" />
             </div>
           </div>
 
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gradient-arkus mb-3">
+          <div className="text-center mb-6 md:mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-gradient-arkus mb-3">
               {currentStepData.title}
             </h2>
-            <p className="text-lg text-gray-700 leading-relaxed">
+            <p className="text-base md:text-lg text-gray-700 leading-relaxed">
               {currentStepData.description}
             </p>
           </div>
 
-          <div className="flex items-center justify-center gap-2 mb-8">
+          <div className="flex items-center justify-center gap-2 mb-6 md:mb-8">
             {steps.map((_, index) => (
               <button
                 key={index}
@@ -95,18 +95,18 @@ export function IntroModal({ onClose }: IntroModalProps) {
             ))}
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <button
               onClick={handlePrev}
               disabled={currentStep === 0}
-              className="px-6 py-3 bg-white text-gray-900 rounded-xl hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all font-medium border border-gray-300"
+              className="px-4 md:px-6 py-2 md:py-3 bg-white text-gray-900 rounded-xl hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all font-medium border border-gray-300 text-sm md:text-base"
             >
               Previous
             </button>
 
             <button
               onClick={handleNext}
-              className="px-8 py-3 btn-gradient-arkus rounded-xl hover:shadow-xl transition-all font-medium shadow-lg"
+              className="px-6 md:px-8 py-2 md:py-3 btn-gradient-arkus rounded-xl hover:shadow-xl transition-all font-medium shadow-lg text-sm md:text-base"
             >
               {currentStep === steps.length - 1 ? 'Get Started' : 'Next'}
             </button>
