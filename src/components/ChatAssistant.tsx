@@ -238,12 +238,6 @@ ${efficiencyAnalysis}
 ${trafficSummary}`;
   };
 
-  // Helper function to minimize chat on mobile when showing/focusing elements
-  const minimizeChatOnMobile = () => {
-    if (typeof window !== 'undefined' && window.innerWidth < 1024 && onClose) {
-      onClose();
-    }
-  };
 
   const answerTrafficQueryLocally = (userMessage: string): boolean => {
     const lower = userMessage.toLowerCase();
@@ -415,8 +409,6 @@ ${trafficSummary}`;
               };
             })
           };
-          // Minimize chat on mobile when showing routes
-          setTimeout(() => minimizeChatOnMobile(), 500);
           return {
             content: 'Here are all the routes in the system:',
             structuredData: routeData
@@ -439,8 +431,6 @@ ${trafficSummary}`;
             };
           })
         };
-        // Minimize chat on mobile when showing vehicles
-        setTimeout(() => minimizeChatOnMobile(), 500);
         return {
           content: 'Here are all the vehicles in the fleet:',
           structuredData: vehicleData
@@ -464,8 +454,6 @@ ${trafficSummary}`;
             };
           })
         };
-        // Minimize chat on mobile when showing warehouses
-        setTimeout(() => minimizeChatOnMobile(), 500);
         return {
           content: 'Here are all the warehouses:',
           structuredData: warehouseData
