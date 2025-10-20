@@ -221,8 +221,8 @@ function App() {
         <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 z-20 flex-shrink-0 shadow-lg">
           <div className="px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-gradient-arkus rounded-lg flex items-center justify-center shadow-lg">
-                <Truck className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 bg-white border border-gray-200 rounded-lg flex items-center justify-center shadow-lg">
+                <Truck className="w-6 h-6" style={{ stroke: 'url(#grad-section-icon)' }} />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900 font-display">Autonomous Fleet Control</h1>

@@ -67,13 +67,13 @@ export function IntroModal({ onClose }: IntroModalProps) {
 
         <div className="p-4 md:p-8 overflow-y-auto max-h-full">
           <div className="flex items-center justify-center mb-4 md:mb-6">
-            <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-arkus-solid rounded-2xl flex items-center justify-center shadow-lg">
-              <Icon className="w-8 h-8 md:w-10 md:h-10 text-white" />
+            <div className="w-16 h-16 md:w-20 md:h-20 bg-white border border-gray-200 rounded-2xl flex items-center justify-center shadow-lg">
+              <Icon className="w-8 h-8 md:w-10 md:h-10" style={{ stroke: 'url(#grad-section-icon)' }} />
             </div>
           </div>
 
           <div className="text-center mb-6 md:mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-gradient-arkus mb-3">
+            <h2 className="text-2xl md:text-3xl font-bold text-gradient-arkus mb-3 font-display">
               {currentStepData.title}
             </h2>
             <p className="text-base md:text-lg text-gray-700 leading-relaxed">
@@ -88,7 +88,7 @@ export function IntroModal({ onClose }: IntroModalProps) {
                 onClick={() => setCurrentStep(index)}
                 className={`h-2 rounded-full transition-all ${
                   index === currentStep
-                    ? 'w-8 bg-gradient-arkus-solid'
+                    ? 'w-8 bg-arkus-black'
                     : 'w-2 bg-gray-300 hover:bg-gray-400'
                 }`}
               />
@@ -99,14 +99,14 @@ export function IntroModal({ onClose }: IntroModalProps) {
             <button
               onClick={handlePrev}
               disabled={currentStep === 0}
-              className="px-4 md:px-6 py-2 md:py-3 bg-white text-gray-900 rounded-xl hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all font-medium border border-gray-300 text-sm md:text-base"
+              className="px-4 md:px-6 py-2 md:py-3 bg-arkus-black text-white rounded-xl hover:shadow-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all font-medium text-sm md:text-base"
             >
               Previous
             </button>
 
             <button
               onClick={handleNext}
-              className="px-6 md:px-8 py-2 md:py-3 btn-gradient-arkus rounded-xl hover:shadow-xl transition-all font-medium shadow-lg text-sm md:text-base"
+              className="px-6 md:px-8 py-2 md:py-3 bg-arkus-black text-white rounded-xl hover:shadow-xl transition-all font-medium shadow-lg text-sm md:text-base"
             >
               {currentStep === steps.length - 1 ? 'Get Started' : 'Next'}
             </button>
@@ -115,7 +115,7 @@ export function IntroModal({ onClose }: IntroModalProps) {
 
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200">
           <div
-            className="h-full bg-gradient-arkus-solid transition-all duration-300"
+            className="h-full bg-arkus-black transition-all duration-300"
             style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
           />
         </div>

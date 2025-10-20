@@ -17,10 +17,10 @@ export default {
         display: ['Widescreen', 'Impact', 'Arial Black', 'sans-serif'],
       },
       backgroundImage: {
-        'gradient-arkus': 'linear-gradient(140deg, #F70D3F 0%, #EC10A9 50%, #0055FF 100%)',
-        'gradient-arkus-soft': 'linear-gradient(135deg, rgba(247,13,63,0.1) 0%, rgba(236,16,169,0.1) 50%, rgba(0,85,255,0.1) 100%)',
+        'gradient-arkus': 'linear-gradient(140deg, #ff2a68 0%, #a72aff 50%, #2a69ff 100%)',
+        'gradient-arkus-soft': 'linear-gradient(135deg, #ff2a68 0%, #a72aff 50%, #2a69ff 100%)',
         // Independent gradient for section title icons (different angle)
-        'gradient-section-icon': 'linear-gradient(90deg, #F70D3F 0%, #0055FF 100%)',
+        'gradient-section-icon': 'linear-gradient(90deg,#ff2a68 0%, #a72aff 50%, #2a69ff 100%)',
       },
     },
   },
