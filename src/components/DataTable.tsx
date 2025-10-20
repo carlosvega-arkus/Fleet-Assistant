@@ -60,8 +60,8 @@ export function DataTable({ data }: DataTableProps) {
           {data.routes.map((route, idx) => (
             <details key={idx} className="py-2">
               <summary className="list-none cursor-pointer">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
                     <div className="text-sm font-semibold text-gray-900 truncate">{route.name}</div>
                     <div className="text-xs text-gray-500 font-mono">{route.id}</div>
                     <div className="text-xs text-gray-600 mt-1 truncate">{route.origin} → {route.destination}</div>
@@ -78,7 +78,7 @@ export function DataTable({ data }: DataTableProps) {
                   <span className="text-gray-500">Stops:</span> {route.stops}
                 </div>
                 {route.stopsList && (
-                  <div className="text-xs text-gray-500">{route.stopsList}</div>
+                  <div className="text-xs text-gray-500 break-words">{route.stopsList}</div>
                 )}
                 <div>
                   <span className="text-gray-500">Vehicle:</span> {route.assignedVehicle !== 'None' ? route.assignedVehicle : '—'}
@@ -141,8 +141,8 @@ export function DataTable({ data }: DataTableProps) {
           {data.vehicles.map((vehicle, idx) => (
             <details key={idx} className="py-2">
               <summary className="list-none cursor-pointer">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
                     <div className="text-sm font-semibold text-gray-900 truncate">{vehicle.alias}</div>
                     <div className="text-xs text-gray-500 font-mono">{vehicle.licensePlate}</div>
                     <div className="text-xs text-gray-600 mt-1 truncate">{vehicle.currentRoute}</div>
@@ -160,10 +160,10 @@ export function DataTable({ data }: DataTableProps) {
                   </span>
                 </div>
               </summary>
-              <div className="mt-2 pl-1 text-sm text-gray-700 grid grid-cols-2 gap-y-1 gap-x-3">
+              <div className="mt-2 pl-1 text-sm text-gray-700 space-y-1">
                 <div><span className="text-gray-500">ETA:</span> {vehicle.eta || '—'}</div>
                 <div><span className="text-gray-500">Stops:</span> {vehicle.stopsRemaining || '—'}</div>
-                <div className="col-span-2"><span className="text-gray-500">Progress:</span> {vehicle.progress || '—'}</div>
+                <div><span className="text-gray-500">Progress:</span> {vehicle.progress || '—'}</div>
               </div>
             </details>
           ))}
@@ -216,13 +216,13 @@ export function DataTable({ data }: DataTableProps) {
           {data.warehouses.map((warehouse, idx) => (
             <details key={idx} className="py-2">
               <summary className="list-none cursor-pointer">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
                     <div className="text-sm font-semibold text-gray-900 truncate">{warehouse.name}</div>
                     <div className="text-xs text-gray-500 font-mono">{warehouse.id}</div>
                     <div className="text-xs text-gray-600 mt-1 truncate">{warehouse.address}</div>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
                     <span className="inline-block bg-blue-50 text-blue-600 px-2 py-1 rounded text-xs">Out: {warehouse.outboundRoutes}</span>
                     <span className="inline-block bg-green-50 text-green-600 px-2 py-1 rounded text-xs">In: {warehouse.inboundRoutes}</span>
                   </div>

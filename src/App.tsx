@@ -40,21 +40,21 @@ function App() {
     const htmlEl = document.documentElement as HTMLElement;
     const bodyEl = document.body as HTMLBodyElement;
     const prevBodyOverflow = bodyEl.style.overflow;
-    const prevBodyTouchAction = (bodyEl.style as any).touchAction as string | undefined;
-    const prevHtmlOverscrollY = (htmlEl.style as any).overscrollBehaviorY as string | undefined;
+    const prevBodyTouchAction = (bodyEl.style as { touchAction?: string }).touchAction;
+    const prevHtmlOverscrollY = (htmlEl.style as { overscrollBehaviorY?: string }).overscrollBehaviorY;
     if (activePanel === 'chat') {
       bodyEl.style.overflow = 'hidden';
-      (bodyEl.style as any).touchAction = 'none';
-      (htmlEl.style as any).overscrollBehaviorY = 'none';
+      (bodyEl.style as { touchAction: string }).touchAction = 'none';
+      (htmlEl.style as { overscrollBehaviorY: string }).overscrollBehaviorY = 'none';
     } else {
       bodyEl.style.overflow = prevBodyOverflow || '';
-      (bodyEl.style as any).touchAction = prevBodyTouchAction || '';
-      (htmlEl.style as any).overscrollBehaviorY = prevHtmlOverscrollY || '';
+      (bodyEl.style as { touchAction: string }).touchAction = prevBodyTouchAction || '';
+      (htmlEl.style as { overscrollBehaviorY: string }).overscrollBehaviorY = prevHtmlOverscrollY || '';
     }
     return () => {
       bodyEl.style.overflow = prevBodyOverflow || '';
-      (bodyEl.style as any).touchAction = prevBodyTouchAction || '';
-      (htmlEl.style as any).overscrollBehaviorY = prevHtmlOverscrollY || '';
+      (bodyEl.style as { touchAction: string }).touchAction = prevBodyTouchAction || '';
+      (htmlEl.style as { overscrollBehaviorY: string }).overscrollBehaviorY = prevHtmlOverscrollY || '';
     };
   }, [activePanel]);
 
@@ -75,7 +75,7 @@ function App() {
 
   // Mobile chat bubble component
   function MobileChatBubble({ activePanel, setActivePanel }: { activePanel: Panel | null; setActivePanel: (p: Panel | null) => void }) {
-    const { isChatOpen, unreadCount, openChat, resetUnread } = useFleet();
+    const { unreadCount, openChat, resetUnread } = useFleet();
     
     // Only show bubble when chat is not active and we're on mobile
     if (typeof window !== 'undefined' && window.innerWidth >= 1024) return null;
@@ -140,8 +140,8 @@ function App() {
   // Listen for closeMobilePanel events from child panels (e.g., Dispatch)
   useEffect(() => {
     const handler = () => setActivePanel(null);
-    window.addEventListener('closeMobilePanel', handler as any);
-    return () => window.removeEventListener('closeMobilePanel', handler as any);
+    window.addEventListener('closeMobilePanel', handler as EventListener);
+    return () => window.removeEventListener('closeMobilePanel', handler as EventListener);
   }, []);
 
   const handleMouseDown = () => {
@@ -355,9 +355,14 @@ function App() {
           {/* Mobile chat - floating bubble */}
           {activePanel === 'chat' && (
             <div
-              className="lg:hidden fixed inset-x-4 bottom-4 bg-white/95 backdrop-blur-sm shadow-2xl z-50 rounded-2xl overflow-hidden flex flex-col pointer-events-auto"
+              className="lg:hidden fixed inset-x-2 sm:inset-x-4 bottom-4 bg-white/95 backdrop-blur-sm shadow-2xl z-50 rounded-2xl overflow-hidden flex flex-col pointer-events-auto"
               data-chat-modal="true"
-              style={{ touchAction: 'manipulation', height: '75vh' }}
+              style={{ 
+                touchAction: 'manipulation', 
+                height: '75vh',
+                maxHeight: 'calc(100vh - 2rem)',
+                minHeight: '400px'
+              }}
               onTouchStart={(e) => { e.stopPropagation(); }}
               onTouchMove={(e) => { e.stopPropagation(); }}
               onWheel={(e) => { e.stopPropagation(); }}
@@ -373,7 +378,7 @@ function App() {
               </button>
               
               <div className="flex-1 min-h-0 overflow-hidden" style={{ overscrollBehaviorY: 'contain' }}>
-                <ChatAssistant />
+                <ChatAssistant onClose={() => setActivePanel(null)} />
               </div>
             </div>
           )}

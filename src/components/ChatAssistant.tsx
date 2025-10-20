@@ -133,7 +133,11 @@ const formatMessageContent = (content: string, isUser: boolean): JSX.Element => 
   return <>{elements}</>;
 };
 
-export function ChatAssistant() {
+interface ChatAssistantProps {
+  onClose?: () => void;
+}
+
+export function ChatAssistant({ onClose }: ChatAssistantProps = {}) {
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [pendingDispatch, setPendingDispatch] = useState<{ vehicleId: string; routeId: string } | null>(null);
@@ -234,6 +238,13 @@ ${efficiencyAnalysis}
 ${trafficSummary}`;
   };
 
+  // Helper function to minimize chat on mobile when showing/focusing elements
+  const minimizeChatOnMobile = () => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024 && onClose) {
+      onClose();
+    }
+  };
+
   const answerTrafficQueryLocally = (userMessage: string): boolean => {
     const lower = userMessage.toLowerCase();
     if (lower.includes('traffic') || lower.includes('jam') || lower.includes('congestion') || lower.includes('closed') || lower.includes('delay')) {
@@ -320,6 +331,10 @@ ${trafficSummary}`;
           if (route && !visibleRouteIds.has(route.id)) {
             toggleRouteVisibility(route.id);
           }
+          // Minimize chat on mobile when showing route
+          if (typeof window !== 'undefined' && window.innerWidth < 1024 && onClose) {
+            onClose();
+          }
           return true;
         } else if (action.action === 'focus_route' && action.params?.routeId) {
           const routeId = action.params.routeId.toLowerCase();
@@ -329,6 +344,10 @@ ${trafficSummary}`;
               toggleRouteVisibility(route.id);
             }
             setFocusedRoute(route.id);
+            // Minimize chat on mobile when focusing route
+            if (typeof window !== 'undefined' && window.innerWidth < 1024 && onClose) {
+              onClose();
+            }
             return true;
           }
         } else if (action.action === 'dispatch' && action.params?.vehicleId && action.params?.routeId) {
@@ -376,31 +395,33 @@ ${trafficSummary}`;
     const lowerMessage = userMessage.toLowerCase();
 
     if (lowerMessage.includes('list') || lowerMessage.includes('show all') || lowerMessage.includes('all routes') || lowerMessage.includes('all vehicles') || lowerMessage.includes('all warehouses')) {
-      if (lowerMessage.includes('route')) {
-        const routeData: RouteTableData = {
-          type: 'routes',
-          routes: savedRoutes.map(r => {
-            const origin = warehouses.find(w => w.id === r.originWarehouseId);
-            const destination = warehouses.find(w => w.id === r.destinationWarehouseId);
-            const assignedVehicle = vehicles.find(v => v.currentRouteId === r.id);
+        if (lowerMessage.includes('route')) {
+          const routeData: RouteTableData = {
+            type: 'routes',
+            routes: savedRoutes.map(r => {
+              const origin = warehouses.find(w => w.id === r.originWarehouseId);
+              const destination = warehouses.find(w => w.id === r.destinationWarehouseId);
+              const assignedVehicle = vehicles.find(v => v.currentRouteId === r.id);
 
-            return {
-              id: r.id.toUpperCase(),
-              name: r.name,
-              origin: origin?.name || 'Unknown',
-              destination: destination?.name || 'Unknown',
-              stops: r.stops.length,
-              stopsList: r.stops.map(s => s.businessName).join(', '),
-              assignedVehicle: assignedVehicle?.alias || 'None',
-              status: assignedVehicle ? 'Active' : 'Available'
-            };
-          })
-        };
-        return {
-          content: 'Here are all the routes in the system:',
-          structuredData: routeData
-        };
-      }
+              return {
+                id: r.id.toUpperCase(),
+                name: r.name,
+                origin: origin?.name || 'Unknown',
+                destination: destination?.name || 'Unknown',
+                stops: r.stops.length,
+                stopsList: r.stops.map(s => s.businessName).join(', '),
+                assignedVehicle: assignedVehicle?.alias || 'None',
+                status: assignedVehicle ? 'Active' : 'Available'
+              };
+            })
+          };
+          // Minimize chat on mobile when showing routes
+          setTimeout(() => minimizeChatOnMobile(), 500);
+          return {
+            content: 'Here are all the routes in the system:',
+            structuredData: routeData
+          };
+        }
 
       if (lowerMessage.includes('vehicle')) {
         const vehicleData: VehicleTableData = {
@@ -418,6 +439,8 @@ ${trafficSummary}`;
             };
           })
         };
+        // Minimize chat on mobile when showing vehicles
+        setTimeout(() => minimizeChatOnMobile(), 500);
         return {
           content: 'Here are all the vehicles in the fleet:',
           structuredData: vehicleData
@@ -441,6 +464,8 @@ ${trafficSummary}`;
             };
           })
         };
+        // Minimize chat on mobile when showing warehouses
+        setTimeout(() => minimizeChatOnMobile(), 500);
         return {
           content: 'Here are all the warehouses:',
           structuredData: warehouseData
@@ -667,7 +692,7 @@ ${trafficSummary}`;
       </div>
 
       <div
-        className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-3"
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-2 sm:p-4 space-y-3"
         style={{
           WebkitOverflowScrolling: 'touch' as CSSProperties['WebkitOverflowScrolling'],
           overscrollBehaviorY: 'contain',
@@ -687,9 +712,9 @@ ${trafficSummary}`;
                 <Bot className="w-4 h-4 text-white" />
               </div>
             )}
-            <div className={`flex flex-col ${message.type === 'user' ? 'items-end' : 'items-start'} ${message.structuredData ? 'w-full' : 'max-w-[75%]'}`}>
+            <div className={`flex flex-col ${message.type === 'user' ? 'items-end' : 'items-start'} ${message.structuredData ? 'w-full' : 'max-w-[85%] sm:max-w-[75%]'}`}>
               <div
-                className={`rounded-2xl px-4 py-2.5 shadow-lg ${
+                className={`rounded-2xl px-3 sm:px-4 py-2.5 shadow-lg ${
                   message.type === 'user'
                     ? 'bg-arkus-black text-white rounded-br-sm'
                     : 'bg-gray-50 text-gray-800 border border-gray-200 rounded-tl-sm'
@@ -732,7 +757,7 @@ ${trafficSummary}`;
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-3 bg-white border-t border-gray-200 flex-shrink-0" onTouchMove={(e) => e.stopPropagation()}>
+      <div className="p-2 sm:p-3 bg-white border-t border-gray-200 flex-shrink-0" onTouchMove={(e) => e.stopPropagation()}>
         <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
           {quickActions.map((action, idx) => (
             <button
@@ -741,7 +766,7 @@ ${trafficSummary}`;
                 setInput(action);
                 inputRef.current?.focus();
               }}
-              className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full text-xs whitespace-nowrap transition-colors border border-gray-200"
+              className="px-2 sm:px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full text-xs whitespace-nowrap transition-colors border border-gray-200"
             >
               {action}
             </button>
@@ -756,7 +781,7 @@ ${trafficSummary}`;
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Type a message..."
-            className="flex-1 px-4 py-2.5 bg-gray-100 border border-gray-300 rounded-full focus:ring-2 focus:ring-arkus-scarlet focus:border-arkus-scarlet text-sm placeholder-gray-500 transition-all text-gray-900"
+            className="flex-1 px-3 sm:px-4 py-2.5 bg-gray-100 border border-gray-300 rounded-full focus:ring-2 focus:ring-arkus-scarlet focus:border-arkus-scarlet text-sm placeholder-gray-500 transition-all text-gray-900"
           />
           <button
             onClick={() => {
