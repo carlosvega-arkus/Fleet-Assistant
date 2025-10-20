@@ -34,7 +34,7 @@ export function RoutesPanel() {
             <div
               key={r.id}
               className={`border rounded-lg p-3 transition-all ${
-                isFocused ? 'border-arkus-fuchsia bg-pink-50' : 'border-gray-200 bg-white hover:border-arkus-blue'
+                isFocused ? 'btn-gradient-arkus border-2 from-arkus-scarlet via-arkus-fuchsia to-arkus-blue bg-clip-border text-gray-700 bg-gray-100' : 'border-gray-200 bg-white hover:border-arkus-blue'
               }`}
             >
               <div className="flex items-start justify-between mb-1">
