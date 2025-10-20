@@ -355,13 +355,16 @@ function App() {
           {/* Mobile chat - floating bubble */}
           {activePanel === 'chat' && (
             <div
-              className="lg:hidden fixed inset-x-2 sm:inset-x-4 bottom-4 bg-white/95 backdrop-blur-sm shadow-2xl z-50 rounded-2xl overflow-hidden flex flex-col pointer-events-auto"
+              className="lg:hidden fixed inset-x-2 sm:inset-x-4 bg-white/95 backdrop-blur-sm shadow-2xl z-50 rounded-2xl overflow-hidden flex flex-col pointer-events-auto"
               data-chat-modal="true"
               style={{ 
-                touchAction: 'manipulation', 
-                height: '75vh',
-                maxHeight: 'calc(100vh - 2rem)',
-                minHeight: '400px'
+                touchAction: 'manipulation',
+                bottom: 'max(1rem, env(safe-area-inset-bottom))',
+                height: 'min(75svh, calc(100svh - 2rem))',
+                maxHeight: 'calc(100svh - 2rem)',
+                minHeight: '360px',
+                paddingTop: 'env(safe-area-inset-top)',
+                paddingBottom: 'env(safe-area-inset-bottom)'
               }}
               onTouchStart={(e) => { e.stopPropagation(); }}
               onTouchMove={(e) => { e.stopPropagation(); }}
@@ -372,7 +375,11 @@ function App() {
                 type="button"
                 aria-label="Close chat"
                 onClick={() => setActivePanel(null)}
-                className="absolute top-2 right-2 z-10 p-2 rounded-full bg-white/90 border border-gray-200 shadow hover:bg-gray-100 active:scale-95 transition"
+                className="absolute z-10 p-2 rounded-full bg-white/90 border border-gray-200 shadow hover:bg-gray-100 active:scale-95 transition"
+                style={{
+                  top: 'calc(env(safe-area-inset-top, 0px) + 8px)',
+                  right: 'calc(env(safe-area-inset-right, 0px) + 8px)'
+                }}
               >
                 <X className="w-4 h-4 text-gray-700" />
               </button>
