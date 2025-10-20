@@ -488,6 +488,26 @@ ${trafficSummary}`;
     });
 
     try {
+      // Direct intent: "Show Route RT-002" / "Focus Route RT-002"
+      const showRouteMatch = userMessage.match(/\b(show|focus)\s+(route\s+)?(rt[-_ ]?\d{3})\b/i);
+      if (showRouteMatch) {
+        const normalizedRouteId = showRouteMatch[3].toLowerCase().replace(/[-_ ]/, '-');
+        const route = savedRoutes.find(r => r.id === normalizedRouteId);
+        if (route) {
+          if (!visibleRouteIds.has(route.id)) {
+            toggleRouteVisibility(route.id);
+          }
+          setFocusedRoute(route.id);
+          // Minimize chat on mobile upon focusing a specific element
+          if (typeof window !== 'undefined' && window.innerWidth < 1024 && onClose) {
+            onClose();
+          }
+          addChatMessage({ type: 'assistant', content: `Focusing ${route.id.toUpperCase()} (${route.name}) on the map.` });
+          setIsProcessing(false);
+          return;
+        }
+      }
+
       // Confirm same-route detour flow
       if (pendingReroute && (lowerMessage === 'yes' || lowerMessage === 'confirm' || lowerMessage === 'reroute' || lowerMessage === 'detour' || lowerMessage === 'si' || lowerMessage === 'ok')) {
         const routeId = pendingReroute.routeId.toLowerCase();
