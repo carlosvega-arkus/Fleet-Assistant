@@ -99,7 +99,7 @@ export function IntroModal({ onClose }: IntroModalProps) {
             <button
               onClick={handlePrev}
               disabled={currentStep === 0}
-              className="px-4 md:px-6 py-2 md:py-3 bg-arkus-black text-white rounded-xl hover:shadow-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all font-medium text-sm md:text-base"
+              className="px-4 md:px-6 py-2 md:py-3 bg-white text-black border border-black rounded-xl hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all font-medium text-sm md:text-base"
             >
               Previous
             </button>
