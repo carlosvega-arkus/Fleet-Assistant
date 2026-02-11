@@ -8,7 +8,7 @@ export async function queryGemini(prompt: string, context: string): Promise<stri
     }
 
     const genAI = new GoogleGenerativeAI(API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const systemPrompt = `You are an AI assistant for a Fleet Management System. You help manage vehicles, routes, and warehouses.
 
